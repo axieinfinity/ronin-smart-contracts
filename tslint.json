@@ -1,0 +1,10 @@
+{
+  "extends": ["@axie/tslint-config"],
+  "linterOptions": {
+    "exclude": [
+      "src/abi/*",
+      "src/bytecode/*",
+      "src/contract/*"
+    ]
+  }
+}
