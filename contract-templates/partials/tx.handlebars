@@ -1,0 +1,10 @@
+{{this.tsName}}(
+  this: {{contractName}}Contract,
+{{> typed_params inputs=inputs}}
+): ContractTransaction {
+  return BaseContract.constructTransaction(
+    '{{this.functionSignature}}',
+    [{{> params inputs=inputs}}],
+    this,
+  );
+}

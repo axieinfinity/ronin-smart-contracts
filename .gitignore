@@ -1,0 +1,25 @@
+# OS cache files
+.DS_Store
+
+# Dependencies
+node_modules/
+
+# Build directories
+dist/
+tmp/
+.next/
+.nuxt/
+
+# To maintain directory structure
+!.keep
+
+packages/document-parser/credentials/access_token.json
+
+# Error files
+yarn-error.log
+
+/artifacts/
+/src/abi/
+/src/bytecode/
+/src/contract/
+.npmrc
