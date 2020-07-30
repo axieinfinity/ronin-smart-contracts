@@ -1,11 +1,11 @@
 pragma solidity ^0.5.2;
 
-import "@axie/contract-library/contracts/token/erc20/ERC20Mintable.sol";
 import "@axie/contract-library/contracts/token/erc20/ERC20Detailed.sol";
+import "@axie/contract-library/contracts/token/erc20/ERC20Mintable.sol";
 import "./IWETH.sol";
 
 
-contract WETHDev is IWETH, ERC20Mintable, ERC20Detailed {
+contract WETHDev is IWETH, ERC20Detailed, ERC20Mintable {
 
   event Deposit(
     address sender,
