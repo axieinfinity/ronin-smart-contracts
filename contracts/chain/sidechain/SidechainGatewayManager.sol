@@ -40,7 +40,7 @@ contract SidechainGatewayManager is SidechainGatewayStorage {
     address _token,
     uint32 _standard,
     uint256 _tokenNumber
-  ) external {
+  ) external whenNotPaused {
     (,, uint32 _tokenStandard) = registry.getMappedToken(_token, false);
     require(_tokenStandard == _standard);
 
@@ -66,30 +66,30 @@ contract SidechainGatewayManager is SidechainGatewayStorage {
     }
   }
 
-  function withdrawETH(uint256 _amount) external returns (uint256) {
+  function withdrawETH(uint256 _amount) external whenNotPaused returns (uint256) {
     address _weth = registry.getContract(registry.WETH_TOKEN());
     return withdrawERC20For(msg.sender, _weth, _amount);
   }
 
-  function withdrawERC20(address _token, uint256 _amount) external returns (uint256) {
+  function withdrawERC20(address _token, uint256 _amount) external whenNotPaused returns (uint256) {
     return withdrawERC20For(msg.sender, _token, _amount);
   }
 
-  function withdrawERC20For(address _owner, address _token, uint256 _amount) public returns (uint256) {
+  function withdrawERC20For(address _owner, address _token, uint256 _amount) public whenNotPaused returns (uint256) {
     require(IERC20(_token).transferFrom(msg.sender, address(this), _amount), "ERC-20 token transfer failed");
     return _createWithdrawalEntry(_owner, _token, 20, _amount);
   }
 
-  function withdrawERC721(address _token, uint256 _tokenId) external returns (uint256) {
+  function withdrawERC721(address _token, uint256 _tokenId) external whenNotPaused returns (uint256) {
     return withdrawalERC721For(msg.sender, _token, _tokenId);
   }
 
-  function withdrawalERC721For(address _owner, address _token, uint256 _tokenId) public returns (uint256) {
+  function withdrawalERC721For(address _owner, address _token, uint256 _tokenId) public whenNotPaused returns (uint256) {
     IERC721(_token).transferFrom(msg.sender, address(this), _tokenId);
     return _createWithdrawalEntry(_owner, _token, 721, _tokenId);
   }
 
-  function submitWithdrawalSignatures(uint256 _withdrawalId, bool _shouldReplace, bytes calldata _sig) external onlyValidator {
+  function submitWithdrawalSignatures(uint256 _withdrawalId, bool _shouldReplace, bytes calldata _sig) external whenNotPaused onlyValidator {
     bytes memory _currentSig = withdrawalSig[_withdrawalId][msg.sender];
 
     bool _alreadyHasSig = _currentSig.length != 0;
@@ -108,7 +108,7 @@ contract SidechainGatewayManager is SidechainGatewayStorage {
     * Request signature again, in case the withdrawer didn't submit to mainchain in time and the set of the validator
     * has changed. Later on this should require some penaties, e.g some money.
    */
-  function requestSignatureAgain(uint256 _withdrawalId) external {
+  function requestSignatureAgain(uint256 _withdrawalId) external whenNotPaused {
     WithdrawalEntry memory _entry = withdrawals[_withdrawalId];
 
     require(_entry.owner == msg.sender);
@@ -139,7 +139,7 @@ contract SidechainGatewayManager is SidechainGatewayStorage {
     }
   }
 
-  function acknowledWithdrawalOnMainchain(uint256 _withdrawalId) external onlyValidator {
+  function acknowledWithdrawalOnMainchain(uint256 _withdrawalId) external whenNotPaused onlyValidator {
     if (withdrawalValidatorAck[_withdrawalId][msg.sender]) {
       return;
     }

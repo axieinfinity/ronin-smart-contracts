@@ -1,14 +1,16 @@
 pragma solidity ^0.5.2;
 
 import "@axie/contract-library/contracts/proxy/ProxyStorage.sol";
+import "@axie/contract-library/contracts/lifecycle/Pausable.sol";
 import "../common/IValidator.sol";
 import "../common/Registry.sol";
+
 
 /**
  * @title SidechainGatewayStorage
  * @dev Storage of deposit and withdraw information.
  */
-contract SidechainGatewayStorage is ProxyStorage {
+contract SidechainGatewayStorage is ProxyStorage, Pausable {
 
   event TokenDeposited(
     uint256 indexed depositId,
@@ -83,15 +85,15 @@ contract SidechainGatewayStorage is ProxyStorage {
   mapping(address => uint256[]) pendingWithdrawals;
   mapping(uint256 => mapping(address => bool)) withdrawalValidatorAck;
 
-  function updateRegistry(address _registry) external onlyAdmin {
+  function updateRegistry(address _registry) external whenPaused onlyAdmin {
     registry = Registry(_registry);
   }
 
-  function updateValidator(address _validator) external onlyAdmin {
+  function updateValidator(address _validator) external whenPaused onlyAdmin {
     validator = IValidator(_validator);
   }
 
-  function updateQuorum(uint256 _quorum) external onlyAdmin {
+  function updateQuorum(uint256 _quorum) external whenPaused onlyAdmin {
     quorum = _quorum;
   }
 }

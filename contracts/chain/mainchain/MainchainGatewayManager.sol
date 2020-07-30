@@ -33,31 +33,31 @@ contract MainchainGatewayManager is MainchainGatewayStorage {
   // Should be able to withdraw from WETH
   function() external payable {}
 
-  function depositEth() external payable returns (uint256) {
+  function depositEth() external whenNotPaused payable returns (uint256) {
     address _weth = registry.getContract(registry.WETH_TOKEN());
     IWETH(_weth).deposit.value(msg.value)();
     return _createDepositEntry(msg.sender, _weth, 20, msg.value);
   }
 
-  function depositERC20(address _token, uint256 _amount) external returns (uint256) {
+  function depositERC20(address _token, uint256 _amount) external whenNotPaused returns (uint256) {
     return depositERC20For(msg.sender, _token, _amount);
   }
 
-  function depositERC721(address _token, uint256 _tokenId) external returns (uint256) {
+  function depositERC721(address _token, uint256 _tokenId) external whenNotPaused returns (uint256) {
     return depositERC721For(msg.sender, _token, _tokenId);
   }
 
-  function depositERC20For(address _user, address _token, uint256 _amount) public returns (uint256) {
+  function depositERC20For(address _user, address _token, uint256 _amount) public whenNotPaused returns (uint256) {
     require(IERC20(_token).transferFrom(msg.sender, address(this), _amount), "ERC-20 token transfer failed");
     return _createDepositEntry(_user, _token, 20, _amount);
   }
 
-  function depositERC721For(address _user, address _token, uint256 _tokenId) public returns (uint256) {
+  function depositERC721For(address _user, address _token, uint256 _tokenId) public whenNotPaused returns (uint256) {
     IERC721(_token).transferFrom(msg.sender, address(this), _tokenId);
     return _createDepositEntry(_user, _token, 721, _tokenId);
   }
 
-  function depositBulkFor(address _user, address[] memory _tokens, uint256[] memory _tokenNumbers) public {
+  function depositBulkFor(address _user, address[] memory _tokens, uint256[] memory _tokenNumbers) public whenNotPaused {
     require(_tokens.length == _tokenNumbers.length);
 
     for (uint256 _i = 0; _i < _tokens.length; _i++) {
@@ -80,7 +80,7 @@ contract MainchainGatewayManager is MainchainGatewayStorage {
     address _token,
     uint256 _amount,
     bytes calldata _signatures
-  ) external {
+  ) external whenNotPaused {
     withdrawTokenFor(_withdrawalId, msg.sender, _token, _amount, _signatures);
   }
 
@@ -90,7 +90,7 @@ contract MainchainGatewayManager is MainchainGatewayStorage {
     address _token,
     uint256 _amount,
     bytes memory _signatures
-  ) public {
+  ) public whenNotPaused {
       (,, uint32 _tokenType) = registry.getMappedToken(_token, true);
 
       if (_tokenType == 20) {
@@ -105,7 +105,7 @@ contract MainchainGatewayManager is MainchainGatewayStorage {
     address _token,
     uint256 _amount,
     bytes calldata _signatures
-  ) external {
+  ) external whenNotPaused {
     withdrawERC20For(_withdrawalId, msg.sender, _token, _amount, _signatures);
   }
 
@@ -115,7 +115,7 @@ contract MainchainGatewayManager is MainchainGatewayStorage {
     address _token,
     uint256 _amount,
     bytes memory _signatures
-  ) public onlyMappedToken(_token, 20) {
+  ) public whenNotPaused onlyMappedToken(_token, 20) {
     bytes32 _hash = keccak256(abi.encodePacked("withdrawERC20", _withdrawalId, _user, _token, _amount));
 
     require(verifySignatures(_hash, _signatures));
@@ -140,7 +140,7 @@ contract MainchainGatewayManager is MainchainGatewayStorage {
     address _token,
     uint256 _tokenId,
     bytes calldata _signatures
-  ) external {
+  ) external whenNotPaused {
     withdrawERC721For(_withdrawalId, msg.sender, _token, _tokenId, _signatures);
   }
 
@@ -152,6 +152,7 @@ contract MainchainGatewayManager is MainchainGatewayStorage {
     bytes memory _signatures
   )
     public
+    whenNotPaused
     onlyMappedToken(_token, 721)
   {
     bytes32 _hash = keccak256(abi.encodePacked("withdrawERC721", _withdrawalId, _user, _token, _tokenId));
@@ -218,6 +219,7 @@ contract MainchainGatewayManager is MainchainGatewayStorage {
     bytes memory _signatures
   )
     public
+    whenNotPaused
     view
     returns (bool)
   {
