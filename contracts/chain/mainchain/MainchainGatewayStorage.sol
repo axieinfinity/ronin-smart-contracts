@@ -50,15 +50,15 @@ contract MainchainGatewayStorage is ProxyStorage, Pausable {
   DepositEntry[] public deposits;
   mapping(uint256 => WithdrawalEntry) public withdrawals;
 
-  function updateRegistry(address _registry) external whenPaused onlyAdmin {
+  function updateRegistry(address _registry) external onlyAdmin {
     registry = Registry(_registry);
   }
 
-  function updateValidator(address _validator) external whenPaused onlyAdmin {
+  function updateValidator(address _validator) external onlyAdmin {
     validator = IValidator(_validator);
   }
 
-  function updateQuorum(uint256 _quorum) external whenPaused onlyAdmin {
+  function updateQuorum(uint256 _quorum) external onlyAdmin {
     withdrawalQuorum = _quorum;
   }
 }

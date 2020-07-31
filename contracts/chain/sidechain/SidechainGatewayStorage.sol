@@ -85,15 +85,15 @@ contract SidechainGatewayStorage is ProxyStorage, Pausable {
   mapping(address => uint256[]) pendingWithdrawals;
   mapping(uint256 => mapping(address => bool)) withdrawalValidatorAck;
 
-  function updateRegistry(address _registry) external whenPaused onlyAdmin {
+  function updateRegistry(address _registry) external onlyAdmin {
     registry = Registry(_registry);
   }
 
-  function updateValidator(address _validator) external whenPaused onlyAdmin {
+  function updateValidator(address _validator) external onlyAdmin {
     validator = IValidator(_validator);
   }
 
-  function updateQuorum(uint256 _quorum) external whenPaused onlyAdmin {
+  function updateQuorum(uint256 _quorum) external onlyAdmin {
     quorum = _quorum;
   }
 }
