@@ -219,7 +219,6 @@ contract MainchainGatewayManager is MainchainGatewayStorage {
     bytes memory _signatures
   )
     public
-    whenNotPaused
     view
     returns (bool)
   {
