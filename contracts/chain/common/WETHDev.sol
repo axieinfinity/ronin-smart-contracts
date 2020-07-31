@@ -17,12 +17,8 @@ contract WETHDev is IWETH, ERC20Detailed, ERC20Mintable {
     uint256 value
   );
 
-  constructor (
-    string memory _name,
-    string memory _symbol,
-    uint8 _decimals
-  )
-    ERC20Detailed (_name, _symbol, _decimals)
+  constructor ()
+    ERC20Detailed("Wrapped Ether", "WETH", 18)
     public
   {
   }

@@ -69,7 +69,7 @@ describe('Mainchain gateway', () => {
   before(async () => {
     [alice, bob, charles] = await web3Pool.ethGetAccounts();
     mainchainGateway = await MainchainGatewayManagerContract.deploy().send(web3Pool);
-    weth = await WETHDevContract.deploy('Wrapped Ether', 'WETH', 18).send(web3Pool);
+    weth = await WETHDevContract.deploy().send(web3Pool);
     registry = await RegistryContract.deploy().send(web3Pool);
     validator = await ValidatorContract.deploy().send(web3Pool);
 
