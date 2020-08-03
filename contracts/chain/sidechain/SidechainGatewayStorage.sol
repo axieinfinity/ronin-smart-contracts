@@ -1,14 +1,16 @@
 pragma solidity ^0.5.2;
 
 import "@axie/contract-library/contracts/proxy/ProxyStorage.sol";
+import "@axie/contract-library/contracts/lifecycle/Pausable.sol";
 import "../common/IValidator.sol";
 import "../common/Registry.sol";
+
 
 /**
  * @title SidechainGatewayStorage
  * @dev Storage of deposit and withdraw information.
  */
-contract SidechainGatewayStorage is ProxyStorage {
+contract SidechainGatewayStorage is ProxyStorage, Pausable {
 
   event TokenDeposited(
     uint256 indexed depositId,
