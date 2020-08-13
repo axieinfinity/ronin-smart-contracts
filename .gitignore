@@ -23,3 +23,4 @@ yarn-error.log
 /src/bytecode/
 /src/contract/
 .npmrc
+/.idea

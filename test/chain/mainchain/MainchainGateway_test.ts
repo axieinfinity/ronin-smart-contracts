@@ -10,11 +10,11 @@ import 'mocha';
 
 import BN = require('bn.js');
 import web3Utils = require('web3-utils');
-import { MainchainGatewayManagerContract } from '../../src/contract/mainchain_gateway_manager';
-import { MainchainGatewayProxyContract } from '../../src/contract/mainchain_gateway_proxy';
-import { RegistryContract } from '../../src/contract/registry';
-import { ValidatorContract } from '../../src/contract/validator';
-import { WETHDevContract } from '../../src/contract/w_e_t_h_dev';
+import { MainchainGatewayManagerContract } from '../../../src/contract/mainchain_gateway_manager';
+import { MainchainGatewayProxyContract } from '../../../src/contract/mainchain_gateway_proxy';
+import { MainchainValidatorContract } from '../../../src/contract/mainchain_validator';
+import { RegistryContract } from '../../../src/contract/registry';
+import { WETHDevContract } from '../../../src/contract/w_e_t_h_dev';
 
 const ethToWei = (eth: number) => new BN(web3Utils.toWei(eth.toString(), 'ether'));
 
@@ -60,7 +60,7 @@ describe('Mainchain gateway', () => {
   let charles: string;
   let mainchainGateway: MainchainGatewayManagerContract;
   let registry: RegistryContract;
-  let validator: ValidatorContract;
+  let validator: MainchainValidatorContract;
   let mainchainGatewayProxy: MainchainGatewayProxyContract;
   let weth: WETHDevContract;
   let erc20: ERC20FullContract;
@@ -71,10 +71,14 @@ describe('Mainchain gateway', () => {
     mainchainGateway = await MainchainGatewayManagerContract.deploy().send(web3Pool);
     weth = await WETHDevContract.deploy().send(web3Pool);
     registry = await RegistryContract.deploy().send(web3Pool);
-    validator = await ValidatorContract.deploy().send(web3Pool);
+
+    const validatorContract = await registry.VALIDATOR().call();
+    validator = await MainchainValidatorContract.deploy().send(web3Pool);
+    await validator.updateQuorum(new BN(99), new BN(100)).send();
+    await registry.updateContract(validatorContract, validator.address).send();
 
     mainchainGatewayProxy = await MainchainGatewayProxyContract
-      .deploy(mainchainGateway.address, registry.address, validator.address, new BN(2)).send(web3Pool);
+      .deploy(mainchainGateway.address, registry.address).send(web3Pool);
 
     // Use the contract logic in place of proxy address
     mainchainGateway = new MainchainGatewayManagerContract(mainchainGatewayProxy.address, web3Pool);

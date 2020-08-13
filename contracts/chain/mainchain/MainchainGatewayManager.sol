@@ -224,11 +224,13 @@ contract MainchainGatewayManager is MainchainGatewayStorage {
   {
     uint256 _signatureCount = _signatures.length.div(66);
 
+    Validator _validator = Validator(registry.getContract(registry.VALIDATOR()));
     uint256 _validatorCount = 0;
     address _lastSigner = address(0);
+
     for (uint256 i = 0; i < _signatureCount; i++) {
       address _signer = _hash.recover(_signatures, i.mul(66));
-      if (validator.isValidator(_signer)) {
+      if (_validator.isValidator(_signer)) {
         _validatorCount++;
       }
       // Prevent duplication of signatures
@@ -236,7 +238,7 @@ contract MainchainGatewayManager is MainchainGatewayStorage {
       _lastSigner = _signer;
     }
 
-    return _validatorCount >= withdrawalQuorum;
+    return _validator.checkThreshold(_validatorCount);
   }
 
   function _withdrawETHFor(

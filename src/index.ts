@@ -1,6 +1,7 @@
 export * from './contract/mainchain_gateway_manager';
 export * from './contract/mainchain_gateway_proxy';
 export * from './contract/mainchain_gateway_storage';
+export * from './contract/mainchain_validator';
 export * from './contract/sidechain_gateway_manager';
 export * from './contract/sidechain_gateway_proxy';
 export * from './contract/sidechain_gateway_storage';

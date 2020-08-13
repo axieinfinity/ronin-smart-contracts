@@ -16,6 +16,8 @@ contract Registry is HasAdmin {
   );
 
   string public constant WETH_TOKEN = "WETH_TOKEN";
+  string public constant VALIDATOR = "VALIDATOR";
+  string public constant ACKNOWLEDGEMENT = "ACKNOWLEDGEMENT";
 
   struct TokenMapping {
     address mainchainToken;

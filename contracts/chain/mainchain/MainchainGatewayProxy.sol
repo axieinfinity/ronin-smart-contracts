@@ -2,13 +2,11 @@ pragma solidity ^0.5.2;
 
 import "@axie/contract-library/contracts/proxy/Proxy.sol";
 import "./MainchainGatewayStorage.sol";
-import "../common/IValidator.sol";
+import "../common/Validator.sol";
 import "../common/Registry.sol";
 
 contract MainchainGatewayProxy is Proxy, MainchainGatewayStorage {
-  constructor(address _proxyTo, address _registry, address _validator, uint256 _quorum) public Proxy(_proxyTo) {
+  constructor(address _proxyTo, address _registry) public Proxy(_proxyTo) {
     registry = Registry(_registry);
-    validator = IValidator(_validator);
-    withdrawalQuorum = _quorum;
   }
 }

@@ -28,7 +28,7 @@ contract SidechainGatewayManager is SidechainGatewayStorage {
   }
 
   modifier onlyValidator() {
-    require(validator.isValidator(msg.sender));
+    require(_getValidator().isValidator(msg.sender));
     _;
   }
 
@@ -44,12 +44,10 @@ contract SidechainGatewayManager is SidechainGatewayStorage {
     (,, uint32 _tokenStandard) = registry.getMappedToken(_token, false);
     require(_tokenStandard == _standard);
 
-    uint256 ackCount = _acknowledgeDeposit(_depositId, _owner, _token, _tokenNumber);
-    if (_alreadyReleased(_depositId)) {
-      return;
-    }
+    bytes32 _hash = keccak256(abi.encode(_owner, _token, _standard, _tokenNumber));
 
-    if (ackCount >= quorum) {
+    Acknowledgement.Status _status = _getAck().acknowledge(_getDepositAckChannel(), _depositId, _hash);
+    if (_status == Acknowledgement.Status.FirstApproved) {
       if (_standard == 20) {
         _depositERC20For(_owner, _token, _tokenNumber);
       } else if (_standard == 721) {
@@ -140,16 +138,12 @@ contract SidechainGatewayManager is SidechainGatewayStorage {
   }
 
   function acknowledWithdrawalOnMainchain(uint256 _withdrawalId) external whenNotPaused onlyValidator {
-    if (withdrawalValidatorAck[_withdrawalId][msg.sender]) {
-      return;
-    }
+    bytes32 _hash = keccak256(abi.encode(_withdrawalId));
+    Acknowledgement.Status _status = _getAck().acknowledge(_getWithdrawalAckChannel(), _withdrawalId, _hash);
 
-    withdrawalValidatorAck[_withdrawalId][msg.sender] = true;
-    WithdrawalEntry storage _entry = withdrawals[_withdrawalId];
-    _entry.acknowledgedCount++;
-
-    if (_entry.acknowledgedCount == quorum) {
+    if (_status == Acknowledgement.Status.FirstApproved) {
       // Remove out of the pending withdrawals
+      WithdrawalEntry storage _entry = withdrawals[_withdrawalId];
       uint256[] storage _ids = pendingWithdrawals[_entry.owner];
       uint256 _len = _ids.length;
       for (uint256 _i = 0; _i < _len; _i++) {
@@ -193,36 +187,6 @@ contract SidechainGatewayManager is SidechainGatewayStorage {
     return deposits[_depositId].owner != address(0) || deposits[_depositId].tokenAddress != address(0);
   }
 
-  function _acknowledgeDeposit(
-    uint256 _depositId,
-    address _owner,
-    address _token,
-    uint256 _number
-  )
-    internal
-    onlyValidator
-  returns (uint256) {
-    // Ensure that the validator has not acknowledge this deposit yet
-    require(validatorAck[_depositId][msg.sender] == bytes32(0));
-
-    bytes32 _hash = keccak256(abi.encode(_owner, _token, _number));
-    validatorAck[_depositId][msg.sender] = _hash;
-
-    depositActCount[_depositId][_hash]++;
-    // First acknowledgement
-    if (depositActCount[_depositId][_hash] == 1) {
-      DepositEntry memory _entry = DepositEntry(
-        _owner,
-        _token,
-        _number
-      );
-
-      depositEntryMap[_depositId][_hash] = _entry;
-    }
-
-    return depositActCount[_depositId][_hash];
-  }
-
   function _createWithdrawalEntry(
     address _owner,
     address _token,
@@ -240,8 +204,7 @@ contract SidechainGatewayManager is SidechainGatewayStorage {
       _token,
       _mainchainToken,
       _standard,
-      _number,
-      0
+      _number
     );
 
     _withdrawalId = withdrawalCount;

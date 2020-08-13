@@ -2,8 +2,9 @@ pragma solidity ^0.5.2;
 
 import "@axie/contract-library/contracts/proxy/ProxyStorage.sol";
 import "@axie/contract-library/contracts/lifecycle/Pausable.sol";
-import "../common/IValidator.sol";
+import "../common/Validator.sol";
 import "../common/Registry.sol";
+import "../common/Acknowledgement.sol";
 
 
 /**
@@ -49,7 +50,6 @@ contract SidechainGatewayStorage is ProxyStorage, Pausable {
     address mainchainAddress;
     uint32  standard;
     uint256 tokenNumber;
-    uint256 acknowledgedCount;
   }
 
   struct PendingWithdrawalInfo {
@@ -58,20 +58,12 @@ contract SidechainGatewayStorage is ProxyStorage, Pausable {
   }
 
   Registry public registry;
-  IValidator public validator;
-  uint256 public quorum;
 
   /**
    * To confirm a deposit, we need >= quorum validators acknowledge the info. However a faulty validator can submit
    * an incorrect entry before the normal one does, so we need to keep track of the submission and choose the majority.
    * We hash the deposit entry and count them.
    */
-  // Mapping from depositId => validator => hash of deposit entry
-  mapping(uint256 => mapping(address => bytes32)) validatorAck;
-  // Mapping from depositId => hash => ack acount
-  mapping(uint256 => mapping(bytes32 => uint256)) depositActCount;
-  // Mapping from depositId => hash => entry
-  mapping(uint256 => mapping(bytes32 => DepositEntry)) depositEntryMap;
 
   // Final deposit state, update only once when there is enough acknowledgement
   mapping(uint256 => DepositEntry) public deposits;
@@ -83,17 +75,26 @@ contract SidechainGatewayStorage is ProxyStorage, Pausable {
 
   // Data for single users
   mapping(address => uint256[]) pendingWithdrawals;
-  mapping(uint256 => mapping(address => bool)) withdrawalValidatorAck;
 
   function updateRegistry(address _registry) external onlyAdmin {
     registry = Registry(_registry);
   }
 
-  function updateValidator(address _validator) external onlyAdmin {
-    validator = IValidator(_validator);
+  function _getValidator() internal view returns (Validator _validator) {
+    _validator = Validator(registry.getContract(registry.VALIDATOR()));
   }
 
-  function updateQuorum(uint256 _quorum) external onlyAdmin {
-    quorum = _quorum;
+  function _getAck() internal view returns (Acknowledgement _ack) {
+    _ack = Acknowledgement(registry.getContract(registry.ACKNOWLEDGEMENT()));
+  }
+
+  function _getDepositAckChannel() internal view returns (bytes32 _channel) {
+    Acknowledgement _ack = _getAck();
+    _channel = _ack.getChannel(_ack.DEPOSIT_CHANNEL());
+  }
+
+  function _getWithdrawalAckChannel() internal view returns (bytes32 _channel) {
+    Acknowledgement _ack = _getAck();
+    _channel = _ack.getChannel(_ack.WITHDRAWAL_CHANNEL());
   }
 }
