@@ -59,12 +59,6 @@ contract SidechainGatewayStorage is ProxyStorage, Pausable {
 
   Registry public registry;
 
-  /**
-   * To confirm a deposit, we need >= quorum validators acknowledge the info. However a faulty validator can submit
-   * an incorrect entry before the normal one does, so we need to keep track of the submission and choose the majority.
-   * We hash the deposit entry and count them.
-   */
-
   // Final deposit state, update only once when there is enough acknowledgement
   mapping(uint256 => DepositEntry) public deposits;
 

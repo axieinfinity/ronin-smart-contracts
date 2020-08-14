@@ -16,8 +16,10 @@ contract MainchainValidator is Validator, HasAdmin {
   ) Validator(_validators, _num, _denom) public {
   }
 
-  function addValidator(address _validator) external onlyAdmin {
-    _addValidator(_validator);
+  function addValidators(address[] calldata _validators) external onlyAdmin {
+    for (uint256 _i; _i < _validators.length; ++_i) {
+      _addValidator(_validators[_i]);
+    }
   }
 
   function removeValidator(uint256 _index) external onlyAdmin {

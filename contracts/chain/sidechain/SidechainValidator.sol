@@ -10,19 +10,14 @@ import "../common/Validator.sol";
  * @dev Simple validator contract
  */
 contract SidechainValidator is Validator {
-  // Mapping from hash(validator) => nonce
+  // Mapping from hash => nonce
   mapping(bytes32 => uint256) nonces;
-  // Mapping from hash(validator) => bool
+  // Mapping from hash => bool
   mapping(bytes32 => bool) updatedAck;
 
-  bytes32 ackChannel;
-
   Registry public registry;
-  Acknowledgement acknowledgement;
 
   modifier onlyValidator() {
-    acknowledgement = Acknowledgement(registry.getContract(registry.ACKNOWLEDGEMENT()));
-    ackChannel = acknowledgement.getChannel(acknowledgement.VALIDATOR_CHANNEL());
     require(isValidator(msg.sender));
     _;
   }
@@ -35,10 +30,10 @@ contract SidechainValidator is Validator {
   }
 
   function addValidator(address _validator) external onlyValidator {
-    bytes32 _hash = keccak256(abi.encode(_validator));
+    bytes32 _hash = keccak256(abi.encode("addValidator", _validator));
     uint256 _nonce = _getNonce(_hash);
 
-    Acknowledgement.Status _status = acknowledgement.acknowledge(ackChannel, _nonce, _hash, msg.sender);
+    Acknowledgement.Status _status = _getAck().acknowledge(_getAckChannel(), _nonce, _hash, msg.sender);
     if (_status == Acknowledgement.Status.FirstApproved) {
       _addValidator(_validator);
       updatedAck[_hash] = true;
@@ -48,10 +43,10 @@ contract SidechainValidator is Validator {
   function removeValidator(uint256 _index) external onlyValidator {
     require(_index < validatorCount);
 
-    bytes32 _hash = keccak256(abi.encode(_index));
+    bytes32 _hash = keccak256(abi.encode("removeValidator", _index));
     uint256 _nonce = _getNonce(_hash);
 
-    Acknowledgement.Status _status = acknowledgement.acknowledge(ackChannel, _nonce, _hash, msg.sender);
+    Acknowledgement.Status _status = _getAck().acknowledge(_getAckChannel(), _nonce, _hash, msg.sender);
     if (_status == Acknowledgement.Status.FirstApproved) {
       _removeValidator(_index);
       updatedAck[_hash] = true;
@@ -59,10 +54,10 @@ contract SidechainValidator is Validator {
   }
 
   function updateQuorum(uint256 _numerator, uint256 _denominator) external onlyValidator {
-    bytes32 _hash = keccak256(abi.encode(_numerator, _denominator));
+    bytes32 _hash = keccak256(abi.encode("updateQuorum", _numerator, _denominator));
     uint256 _nonce = _getNonce(_hash);
 
-    Acknowledgement.Status _status = acknowledgement.acknowledge(ackChannel, _nonce, _hash, msg.sender);
+    Acknowledgement.Status _status = _getAck().acknowledge(_getAckChannel(), _nonce, _hash, msg.sender);
     if (_status == Acknowledgement.Status.FirstApproved) {
       _updateQuorum(_numerator, _denominator);
       updatedAck[_hash] = true;
@@ -76,5 +71,14 @@ contract SidechainValidator is Validator {
     } else {
       _nonce = nonces[_hash];
     }
+  }
+
+  function _getAck() internal view returns (Acknowledgement _ack) {
+    _ack = Acknowledgement(registry.getContract(registry.ACKNOWLEDGEMENT()));
+  }
+
+  function _getAckChannel() internal view returns (bytes32 _ackChannel) {
+    Acknowledgement _ack = _getAck();
+    _ackChannel = _ack.getChannel(_ack.VALIDATOR_CHANNEL());
   }
 }

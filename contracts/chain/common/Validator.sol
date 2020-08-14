@@ -48,7 +48,6 @@ contract Validator is IValidator {
     validatorCount++;
 
     emit ValidatorAdded(_validator);
-
   }
 
   function _removeValidator(uint256 _index) internal {
