@@ -3,6 +3,7 @@ pragma solidity ^0.5.2;
 import "@axie/contract-library/contracts/access/HasAdmin.sol";
 import "../common/Validator.sol";
 
+
 /**
  * @title Validator
  * @dev Simple validator contract
@@ -12,7 +13,7 @@ contract MainchainValidator is Validator, HasAdmin {
     address[] memory _validators,
     uint256 _num,
     uint256 _denom
-  ) public Validator(_validators, _num, _denom) {
+  ) Validator(_validators, _num, _denom) public {
   }
 
   function addValidator(address _validator) external onlyAdmin {

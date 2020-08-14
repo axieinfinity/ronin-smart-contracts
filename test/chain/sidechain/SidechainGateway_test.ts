@@ -1,20 +1,21 @@
-import {ERC20FullContract, ERC721FullMintableContract } from '@axie/contract-library';
+import { ERC20FullContract, ERC721FullMintableContract } from '@axie/contract-library';
 import {
   expectTransactionFailed,
   resetAfterAll,
   web3Pool,
 } from '@axie/contract-test-utils';
+import BN = require('bn.js');
 import { expect } from 'chai';
 import * as _ from 'lodash';
 import 'mocha';
-
-import BN = require('bn.js');
 import web3Utils = require('web3-utils');
-import { RegistryContract } from '../../src/contract/registry';
-import { SidechainGatewayManagerContract } from '../../src/contract/sidechain_gateway_manager';
-import { SidechainGatewayProxyContract } from '../../src/contract/sidechain_gateway_proxy';
-import { ValidatorContract } from '../../src/contract/validator';
-import { WETHDevContract } from '../../src/contract/w_e_t_h_dev';
+
+import { AcknowledgementContract, ValidatorContract } from '../../../src';
+import { RegistryContract } from '../../../src/contract/registry';
+import { SidechainGatewayManagerContract } from '../../../src/contract/sidechain_gateway_manager';
+import { SidechainGatewayProxyContract } from '../../../src/contract/sidechain_gateway_proxy';
+import { SidechainValidatorContract } from '../../../src/contract/sidechain_validator';
+import { WETHDevContract } from '../../../src/contract/w_e_t_h_dev';
 
 const ethToWei = (eth: number) => new BN(web3Utils.toWei(eth.toString(), 'ether'));
 
@@ -60,7 +61,8 @@ describe('Sidechain gateway', () => {
   let charles: string;
   let sidechainGateway: SidechainGatewayManagerContract;
   let registry: RegistryContract;
-  let validator: ValidatorContract;
+  let validator: SidechainValidatorContract;
+  let acknowledgement: AcknowledgementContract;
   let sidechainGatewayProxy: SidechainGatewayProxyContract;
   let weth: WETHDevContract;
   let erc721: ERC721FullMintableContract;
@@ -71,17 +73,25 @@ describe('Sidechain gateway', () => {
     weth = await WETHDevContract.deploy().send(web3Pool);
     erc721 = await ERC721FullMintableContract.deploy('ERC721', '721', '').send(web3Pool);
     registry = await RegistryContract.deploy().send(web3Pool);
-    validator = await ValidatorContract.deploy().send(web3Pool);
-    await validator.addValidators([alice, bob, charles]).send();
+
+    validator = await SidechainValidatorContract.deploy([alice, bob, charles], new BN(19), new BN(30)).send(web3Pool);
+    acknowledgement = await AcknowledgementContract.deploy(registry.address).send(web3Pool);
+
+    const validatorContract = await registry.VALIDATOR().call();
+    await registry.updateContract(validatorContract, validator.address).send();
+
+    const acknowledgementContract = await registry.ACKNOWLEDGEMENT().call();
+    await registry.updateContract(acknowledgementContract, acknowledgement.address).send();
 
     sidechainGatewayProxy = await SidechainGatewayProxyContract
-      .deploy(sidechainGateway.address, registry.address, validator.address, new BN(2)).send(web3Pool);
+      .deploy(sidechainGateway.address, registry.address).send(web3Pool);
 
     // Use the contract logic in place of proxy address
     sidechainGateway = new SidechainGatewayManagerContract(sidechainGatewayProxy.address, web3Pool);
-    await sidechainGateway.updateQuorum(new BN(2)).send();
+
     await weth.addMinters([sidechainGateway.address, alice]).send();
     await erc721.addMinters([sidechainGateway.address, alice]).send();
+    await acknowledgement.addOperators([sidechainGateway.address]).send();
   });
 
   describe('test deposit', async () => {
@@ -102,6 +112,7 @@ describe('Sidechain gateway', () => {
 
     it('should be able to call deposit weth but not release yet', async () => {
       await registry.mapToken(bob, weth.address, 20).send();
+
       await sidechainGateway.depositERCTokenFor(
         new BN(0),
         alice,
@@ -143,6 +154,22 @@ describe('Sidechain gateway', () => {
           from: bob,
         }),
       );
+    });
+
+    it('should be acknowledge again', async () => {
+      const amount = ethToWei(1);
+      await sidechainGateway.depositERCTokenFor(
+        new BN(0),
+        alice,
+        weth.address,
+        20,
+        amount,
+      ).send({
+        from: charles,
+      });
+
+      const balance = await weth.balanceOf(alice).call();
+      expect(balance.toString()).eq(amount.toString());
     });
 
     it('should be able to trust the majority', async () => {

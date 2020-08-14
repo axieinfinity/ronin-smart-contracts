@@ -5,6 +5,7 @@ export * from './contract/mainchain_validator';
 export * from './contract/sidechain_gateway_manager';
 export * from './contract/sidechain_gateway_proxy';
 export * from './contract/sidechain_gateway_storage';
+export * from './contract/acknowledgement';
 export * from './contract/registry';
 export * from './contract/validator';
 export * from './contract/w_e_t_h_dev';

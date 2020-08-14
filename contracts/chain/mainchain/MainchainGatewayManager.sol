@@ -10,6 +10,7 @@ import "@axie/contract-library/contracts/util/AddressUtils.sol";
 import "../common/IWETH.sol";
 import "./MainchainGatewayStorage.sol";
 
+
 /**
  * @title MainchainGatewayManager
  * @dev Logic to handle deposits and withdrawl on Mainchain.
@@ -79,9 +80,16 @@ contract MainchainGatewayManager is MainchainGatewayStorage {
     uint256 _withdrawalId,
     address _token,
     uint256 _amount,
-    bytes calldata _signatures
-  ) external whenNotPaused {
-    withdrawTokenFor(_withdrawalId, msg.sender, _token, _amount, _signatures);
+    bytes memory _signatures
+  ) public whenNotPaused
+  {
+    withdrawTokenFor(
+      _withdrawalId,
+      msg.sender,
+      _token,
+      _amount,
+      _signatures
+    );
   }
 
   function withdrawTokenFor(
@@ -90,23 +98,43 @@ contract MainchainGatewayManager is MainchainGatewayStorage {
     address _token,
     uint256 _amount,
     bytes memory _signatures
-  ) public whenNotPaused {
-      (,, uint32 _tokenType) = registry.getMappedToken(_token, true);
+  ) public whenNotPaused
+  {
+    (,, uint32 _tokenType) = registry.getMappedToken(_token, true);
 
-      if (_tokenType == 20) {
-        withdrawERC20For(_withdrawalId, _user, _token, _amount, _signatures);
-      } else if (_tokenType == 721) {
-        withdrawERC721For(_withdrawalId, _user, _token, _amount, _signatures);
-      }
+    if (_tokenType == 20) {
+      withdrawERC20For(
+        _withdrawalId,
+        _user,
+        _token,
+        _amount,
+        _signatures
+      );
+    } else if (_tokenType == 721) {
+      withdrawERC721For(
+        _withdrawalId,
+        _user,
+        _token,
+        _amount,
+        _signatures
+      );
+    }
   }
 
   function withdrawERC20(
     uint256 _withdrawalId,
     address _token,
     uint256 _amount,
-    bytes calldata _signatures
-  ) external whenNotPaused {
-    withdrawERC20For(_withdrawalId, msg.sender, _token, _amount, _signatures);
+    bytes memory _signatures
+  ) public whenNotPaused
+  {
+    withdrawERC20For(
+      _withdrawalId,
+      msg.sender,
+      _token,
+      _amount,
+      _signatures
+    );
   }
 
   function withdrawERC20For(
@@ -115,8 +143,17 @@ contract MainchainGatewayManager is MainchainGatewayStorage {
     address _token,
     uint256 _amount,
     bytes memory _signatures
-  ) public whenNotPaused onlyMappedToken(_token, 20) {
-    bytes32 _hash = keccak256(abi.encodePacked("withdrawERC20", _withdrawalId, _user, _token, _amount));
+  ) public whenNotPaused onlyMappedToken(_token, 20)
+  {
+    bytes32 _hash = keccak256(
+      abi.encodePacked(
+        "withdrawERC20",
+        _withdrawalId,
+        _user,
+        _token,
+        _amount
+      )
+    );
 
     require(verifySignatures(_hash, _signatures));
 
@@ -132,16 +169,28 @@ contract MainchainGatewayManager is MainchainGatewayStorage {
       require(IERC20(_token).transfer(_user, _amount), "Transfer failed");
     }
 
-    _insertWithdrawalEntry(_withdrawalId, _user, _token, _amount);
+    _insertWithdrawalEntry(
+      _withdrawalId,
+      _user,
+      _token,
+      _amount
+    );
   }
 
   function withdrawERC721(
     uint256 _withdrawalId,
     address _token,
     uint256 _tokenId,
-    bytes calldata _signatures
-  ) external whenNotPaused {
-    withdrawERC721For(_withdrawalId, msg.sender, _token, _tokenId, _signatures);
+    bytes memory _signatures
+  ) public whenNotPaused
+  {
+    withdrawERC721For(
+      _withdrawalId,
+      msg.sender,
+      _token,
+      _tokenId,
+      _signatures
+    );
   }
 
   function withdrawERC721For(
@@ -151,11 +200,19 @@ contract MainchainGatewayManager is MainchainGatewayStorage {
     uint256 _tokenId,
     bytes memory _signatures
   )
-    public
-    whenNotPaused
-    onlyMappedToken(_token, 721)
+  public
+  whenNotPaused
+  onlyMappedToken(_token, 721)
   {
-    bytes32 _hash = keccak256(abi.encodePacked("withdrawERC721", _withdrawalId, _user, _token, _tokenId));
+    bytes32 _hash = keccak256(
+      abi.encodePacked(
+        "withdrawERC721",
+        _withdrawalId,
+        _user,
+        _token,
+        _tokenId
+      )
+    );
 
     require(verifySignatures(_hash, _signatures));
 
@@ -166,61 +223,13 @@ contract MainchainGatewayManager is MainchainGatewayStorage {
     _insertWithdrawalEntry(_withdrawalId, _user, _token, _tokenId);
   }
 
-  function _createDepositEntry(
-    address _owner,
-    address _token,
-    uint32 _standard,
-    uint256 _number
-  ) internal onlyMappedToken(_token, _standard)
-  returns (uint256 _depositId) {
-    (,address _sidechainToken, uint32 _tokenStandard) = registry.getMappedToken(_token, true);
-    require(_standard == _tokenStandard);
-
-    DepositEntry memory _entry = DepositEntry(
-      _owner,
-      _token,
-      _sidechainToken,
-      _standard,
-      _number
-    );
-
-    _depositId = depositCount;
-    deposits.push(_entry);
-    depositCount++;
-
-    emit TokenDeposited(_depositId, _owner, _token, _sidechainToken, _standard, _number);
-  }
-
-  function _insertWithdrawalEntry(
-    uint256 _withdrawalId,
-    address _owner,
-    address _token,
-    uint256 _number
-  )
-    internal
-    onlyNewWithdrawal(_withdrawalId)
-  {
-    WithdrawalEntry memory _entry = WithdrawalEntry(
-      _owner,
-      _token,
-      _number
-    );
-
-    withdrawals[_withdrawalId] = _entry;
-
-    emit TokenWithdrew(_withdrawalId, _owner, _token, _number);
-  }
-
   /**
    * @dev returns true if there is enough signatures from validators.
    */
   function verifySignatures(
     bytes32 _hash,
     bytes memory _signatures
-  )
-    public
-    view
-    returns (bool)
+  ) public view returns (bool)
   {
     uint256 _signatureCount = _signatures.length.div(66);
 
@@ -241,17 +250,71 @@ contract MainchainGatewayManager is MainchainGatewayStorage {
     return _validator.checkThreshold(_validatorCount);
   }
 
+  function _createDepositEntry(
+    address _owner,
+    address _token,
+    uint32 _standard,
+    uint256 _number
+  ) internal onlyMappedToken(_token, _standard)
+  returns (uint256 _depositId)
+  {
+    (,address _sidechainToken, uint32 _tokenStandard) = registry.getMappedToken(_token, true);
+    require(_standard == _tokenStandard);
+
+    DepositEntry memory _entry = DepositEntry(
+      _owner,
+      _token,
+      _sidechainToken,
+      _standard,
+      _number
+    );
+
+    _depositId = depositCount;
+    deposits.push(_entry);
+    depositCount++;
+
+    emit TokenDeposited(
+      _depositId,
+      _owner,
+      _token,
+      _sidechainToken,
+      _standard,
+      _number
+    );
+  }
+
+  function _insertWithdrawalEntry(
+    uint256 _withdrawalId,
+    address _owner,
+    address _token,
+    uint256 _number
+  )
+  internal
+  onlyNewWithdrawal(_withdrawalId)
+  {
+    WithdrawalEntry memory _entry = WithdrawalEntry(
+      _owner,
+      _token,
+      _number
+    );
+
+    withdrawals[_withdrawalId] = _entry;
+
+    emit TokenWithdrew(_withdrawalId, _owner, _token, _number);
+  }
+
   function _withdrawETHFor(
     address _user,
     uint256 _amount
-  ) internal {
+  ) internal
+  {
     address _weth = registry.getContract(registry.WETH_TOKEN());
     IWETH(_weth).withdraw(_amount);
     _user.toPayable().transfer(_amount);
   }
 
   // See more here https://blog.polymath.network/try-catch-in-solidity-handling-the-revert-exception-f53718f76047
-  function _tryERC721TransferFrom(address _token, address _from, address _to, uint256 _tokenId) internal returns(bool) {
+  function _tryERC721TransferFrom(address _token, address _from, address _to, uint256 _tokenId) internal returns (bool) {
     (bool success,) = _token.call(
       abi.encodeWithSelector(IERC721(_token).transferFrom.selector, _from, _to, _tokenId)
     );

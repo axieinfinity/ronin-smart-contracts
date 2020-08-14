@@ -4,12 +4,12 @@ import {
   resetAfterAll,
   web3Pool,
 } from '@axie/contract-test-utils';
+import BN = require('bn.js');
 import { expect } from 'chai';
 import * as _ from 'lodash';
 import 'mocha';
-
-import BN = require('bn.js');
 import web3Utils = require('web3-utils');
+
 import { MainchainGatewayManagerContract } from '../../../src/contract/mainchain_gateway_manager';
 import { MainchainGatewayProxyContract } from '../../../src/contract/mainchain_gateway_proxy';
 import { MainchainValidatorContract } from '../../../src/contract/mainchain_validator';
@@ -73,8 +73,7 @@ describe('Mainchain gateway', () => {
     registry = await RegistryContract.deploy().send(web3Pool);
 
     const validatorContract = await registry.VALIDATOR().call();
-    validator = await MainchainValidatorContract.deploy().send(web3Pool);
-    await validator.updateQuorum(new BN(99), new BN(100)).send();
+    validator = await MainchainValidatorContract.deploy([alice, bob], new BN(99), new BN(100)).send(web3Pool);
     await registry.updateContract(validatorContract, validator.address).send();
 
     mainchainGatewayProxy = await MainchainGatewayProxyContract
@@ -186,15 +185,6 @@ describe('Mainchain gateway', () => {
   });
 
   describe('test withdrawal', async () => {
-    it('add validator', async () => {
-      await validator.addValidators([alice, bob]).send();
-
-      const aliceValidator = await validator.isValidator(alice).call();
-      expect(aliceValidator).eq(true);
-      const bobValidator = await validator.isValidator(bob).call();
-      expect(bobValidator).eq(true);
-    });
-
     it('should not be able to withdraw without enough signature', async () => {
       const { signatures } = await getCombinedSignatures(
         false,
