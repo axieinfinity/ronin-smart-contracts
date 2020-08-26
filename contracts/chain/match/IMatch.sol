@@ -48,9 +48,13 @@ contract IMatch is HasAdmin {
     emit PlayerThresholdUpdated(_minPlayer, _maxPlayer);
   }
 
+  function getTotalPlayer(uint256 _matchId) public view returns (uint256) {
+    return players[_matchId].length;
+  }
+
   function _setMatchResult(uint256 _matchId, address _winner) internal onlyCreated(_matchId) {
-    require(_getTotalPlayer(_matchId) <= maxPlayer);
-    require(minPlayer <= _getTotalPlayer(_matchId));
+    require(getTotalPlayer(_matchId) <= maxPlayer);
+    require(minPlayer <= getTotalPlayer(_matchId));
 
     matches[_matchId] = uint256(MatchStatus.Done);
     winners[_matchId] = _winner;
@@ -59,17 +63,13 @@ contract IMatch is HasAdmin {
     emit MatchDone(_matchId, _winner);
   }
 
-  function _getTotalPlayer(uint256 _matchId) internal view returns (uint256) {
-    return players[_matchId].length;
-  }
-
   function _createMatch(uint256 _matchId, address _from) internal {
     require(MatchStatus(matches[_matchId]) == MatchStatus.NotCreated, "this match is created");
 
     matches[_matchId] = uint256(MatchStatus.Created);
-    _joinMatch(_matchId, _from);
-
     emit MatchCreated(_matchId);
+
+    _joinMatch(_matchId, _from);
   }
 
   function _joinMatch(uint256 _matchId, address _from) internal onlyCreated(_matchId) {
@@ -86,16 +86,17 @@ contract IMatch is HasAdmin {
     require(playerMark[_matchId][_from], "this player has not joined the match");
 
     uint256 _index;
-    uint256 _totalPlayer = _getTotalPlayer(_matchId);
+    uint256 _totalPlayer = getTotalPlayer(_matchId);
     address[] storage _players = players[_matchId];
 
     for (uint256 _i = 0; _i < _totalPlayer; _i++) {
       if (players[_matchId][_i] == _from) {
         _index = _i;
+        break;
       }
     }
 
-    address lastPlayer = players[_matchId][_totalPlayer - 1];
+    address lastPlayer = _players[_totalPlayer - 1];
 
     _players[_index] = lastPlayer;
     _players.length--;

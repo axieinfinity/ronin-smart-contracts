@@ -19,13 +19,17 @@ contract IMatchOperation is IMatch {
   mapping(uint256 => uint256) fees;
 
   function getMatchRewards(uint256 _matchId) public view returns (uint256) {
-    uint256 _total = fees[_matchId].mul(_getTotalPlayer(_matchId));
+    uint256 _total = fees[_matchId].mul(getTotalPlayer(_matchId));
     return _total.sub(operationCost);
   }
 
   function setOperationCost(uint256 _operationCost) public onlyAdmin {
     operationCost = _operationCost;
     emit OperationCostUpdated(operationCost);
+  }
+
+  function transferWETHTo(address _to, uint256 _value) public onlyAdmin {
+    require(weth.transfer(_to, _value));
   }
 
   function createMatchAndCharge(uint256 _matchId, uint256 _value) public {
@@ -36,7 +40,7 @@ contract IMatchOperation is IMatch {
     _joinMatchAndCharge(_matchId, msg.sender);
   }
 
-  function unjoinMatchAndCharge(uint256 _matchId) internal {
+  function unjoinMatchAndCharge(uint256 _matchId) public {
     _unjoinMatchAndCharge(_matchId, msg.sender);
   }
 
@@ -44,6 +48,8 @@ contract IMatchOperation is IMatch {
     require(operationCost < _value.mul(maxPlayer));
     require(unjoinCost < _value);
     require(weth.transferFrom(_from, address(this), _value));
+
+    fees[_matchId] = _value;
     _createMatch(_matchId, _from);
   }
 
@@ -53,7 +59,7 @@ contract IMatchOperation is IMatch {
   }
 
   function _unjoinMatchAndCharge(uint256 _matchId, address _from) internal {
-    require(weth.transferFrom(address(this), _from, fees[_matchId].sub(unjoinCost)));
+    require(weth.transfer(_from, fees[_matchId].sub(unjoinCost)));
     _unjoinMatch(_matchId, _from);
   }
 }

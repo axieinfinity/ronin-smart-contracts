@@ -1,8 +1,9 @@
 pragma solidity ^0.5.2;
 
+import "@axie/contract-library/contracts/token/erc20/IERC20Receiver.sol";
 import "./IAppeal.sol";
 
-contract Game is IAppeal {
+contract Game is IAppeal, IERC20Receiver {
   enum Action {Appeal, CreateMatch, JoinMatch, UnjoinMatch}
 
   constructor(
@@ -26,7 +27,7 @@ contract Game is IAppeal {
 
   function receiveApproval(
     address _from,
-    uint256 _value,
+    uint256,
     address _tokenAddress,
     bytes memory /* _data */
   ) public
@@ -35,24 +36,24 @@ contract Game is IAppeal {
 
     uint256 _action;
     uint256 _matchId;
-    uint256 _value;
+    uint256 _joinFee;
 
     assembly {
-      _action := calldataload(0xf4)
-      _matchId := calldataload(0x124)
+      _action := calldataload(0xa4)
+      _matchId := calldataload(0xc4)
     }
 
     if (Action(_action) == Action.Appeal) {
       _appeal(_matchId, _from);
     } else if (Action(_action) == Action.CreateMatch) {
-      assembly {_value := calldataload(0x144)}
-      _createMatchAndCharge(_matchId, _from, _value);
+      assembly { _joinFee := calldataload(0xe4) }
+      _createMatchAndCharge(_matchId, _from, _joinFee);
     } else if (Action(_action) == Action.JoinMatch) {
       _joinMatchAndCharge(_matchId, _from);
     } else if (Action(_action) == Action.UnjoinMatch) {
       _unjoinMatchAndCharge(_matchId, _from);
+    } else {
+      revert("invalid action");
     }
-
-    revert("invalid action");
   }
 }

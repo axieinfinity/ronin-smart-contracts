@@ -74,16 +74,16 @@ contract IReward is IMatchOperation {
       }
     }
 
-    require(_rewardIndexes.length > 0 && _rewards > 0);
+    require(_rewardCount > 0 && _rewards > 0);
 
     // remove reward matches from pending matches
     uint256 _lastMatchId;
-    for (uint256 _i = _rewardCount - 1; _i >= 0; --_i) {
+    for (uint256 _i = _rewardCount; _i > 0; --_i) {
       _lastMatchId = _pendingMatches[_pendingMatches.length - 1];
-      _pendingMatches[_rewardIndexes[_i]] = _lastMatchId;
+      _pendingMatches[_rewardIndexes[_i - 1]] = _lastMatchId;
       _pendingMatches.length--;
     }
 
-    require(weth.transferFrom(address(this), _to, _rewards));
+    require(weth.transfer(_to, _rewards));
   }
 }
