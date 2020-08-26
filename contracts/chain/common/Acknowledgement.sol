@@ -11,11 +11,11 @@ contract Acknowledgement is HasOperators {
   enum Status {NotApproved, FirstApproved, AlreadyApproved}
   // Mapping from channel => boolean
   mapping(bytes32 => bool) channels;
-  // Mapping from channel => nonce => validator => hash entry
+  // Mapping from channel => id => validator => hash entry
   mapping(bytes32 => mapping(uint256 => mapping(address => bytes32))) validatorAck;
-  // Mapping from channel => nonce => hash => ack count
+  // Mapping from channel => id => hash => ack count
   mapping(bytes32 => mapping(uint256 => mapping(bytes32 => uint256))) ackCount;
-  // Mapping from channel => nonce => hash => ack status
+  // Mapping from channel => id => hash => ack status
   mapping(bytes32 => mapping(uint256 => mapping(bytes32 => uint8))) ackStatus;
 
   string public constant DEPOSIT_CHANNEL = "DEPOSIT_CHANNEL";
@@ -51,25 +51,25 @@ contract Acknowledgement is HasOperators {
     registry = Registry(_registry);
   }
 
-  function acknowledge(bytes32 _channel, uint256 _nonce, bytes32 _hash, address _validator) public onlyOperator returns (Status) {
+  function acknowledge(bytes32 _channel, uint256 _id, bytes32 _hash, address _validator) public onlyOperator returns (Status) {
     _validChannel(_channel);
-    require(validatorAck[_channel][_nonce][_validator] == bytes32(0), "the validator already acknowledged");
+    require(validatorAck[_channel][_id][_validator] == bytes32(0), "the validator already acknowledged");
 
-    validatorAck[_channel][_nonce][_validator] = _hash;
-    uint8 _status = ackStatus[_channel][_nonce][_hash];
-    uint256 _count = ackCount[_channel][_nonce][_hash];
+    validatorAck[_channel][_id][_validator] = _hash;
+    uint8 _status = ackStatus[_channel][_id][_hash];
+    uint256 _count = ackCount[_channel][_id][_hash];
 
     if (_getValidatorContract().checkThreshold(_count + 1)) {
       if (_status == uint8(Status.NotApproved)) {
-        ackStatus[_channel][_nonce][_hash] = uint8(Status.FirstApproved);
+        ackStatus[_channel][_id][_hash] = uint8(Status.FirstApproved);
       } else {
-        ackStatus[_channel][_nonce][_hash] = uint8(Status.AlreadyApproved);
+        ackStatus[_channel][_id][_hash] = uint8(Status.AlreadyApproved);
       }
     }
 
-    ackCount[_channel][_nonce][_hash]++;
+    ackCount[_channel][_id][_hash]++;
 
-    return Status(ackStatus[_channel][_nonce][_hash]);
+    return Status(ackStatus[_channel][_id][_hash]);
   }
 
   function _getHash(string memory _name) internal pure returns (bytes32 _hash) {
