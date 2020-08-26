@@ -43,17 +43,17 @@ contract IMatchOperation is IMatch {
   function _createMatchAndCharge(uint256 _matchId, address _from, uint256 _value) internal {
     require(operationCost < _value.mul(maxPlayer));
     require(unjoinCost < _value);
-    require(weth.transferFrom(_from, this, _value));
+    require(weth.transferFrom(_from, address(this), _value));
     _createMatch(_matchId, _from);
   }
 
   function _joinMatchAndCharge(uint256 _matchId, address _from) internal {
-    require(weth.transferFrom(_from, this, fees[_matchId]));
+    require(weth.transferFrom(_from, address(this), fees[_matchId]));
     _joinMatch(_matchId, _from);
   }
 
   function _unjoinMatchAndCharge(uint256 _matchId, address _from) internal {
-    require(weth.transferFrom(this, _from, fees[_matchId].sub(unjoinCost)));
+    require(weth.transferFrom(address(this), _from, fees[_matchId].sub(unjoinCost)));
     _unjoinMatch(_matchId, _from);
   }
 }

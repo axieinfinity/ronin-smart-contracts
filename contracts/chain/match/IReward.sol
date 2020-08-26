@@ -10,7 +10,7 @@ contract IReward is IMatchOperation {
 
   event RewardTimeDueUpdated(uint256 indexed _rewardTimeDue);
 
-  uint256 public rewardTimeDue; // in days
+  uint256 public rewardTimeDue; // day
 
   // Mapping player => matchId[]
   mapping(address => uint256[]) pendingMatches;
@@ -21,36 +21,31 @@ contract IReward is IMatchOperation {
     emit RewardTimeDueUpdated(_rewardTimeDue);
   }
 
-  function setMatchResult(uint256 _matchId, uint256 _winner) public onlyAdmin {
+  function setMatchResult(uint256 _matchId, address _winner) public onlyAdmin {
     super._setMatchResult(_matchId, _winner);
     pendingMatches[_winner].push(_matchId);
   }
 
-  function withdrawPendingRewards() public {
-    withdrawPendingRewardsFor(msg.sender);
+  function isRewardAvailable(uint256 _matchId) public view returns (bool) {
+    uint256 _now = block.timestamp;
+    uint256 _doneAt = matchDoneAt[_matchId];
+
+    uint256 _elapsedDays = _now.sub(_doneAt).div(uint256(60 * 60 * 24));
+    return _elapsedDays >= rewardTimeDue;
   }
 
-  function withdrawPendingRewardsFor(address _to) public {
-    uint256 _rewards = getPendingRewardsOf(_to);
-    delete pendingMatches[_to];
-
-    require(weth.transferFrom(this, _to, _rewards));
-  }
-
-  function getPendingRewards() public view returns (uint256)  {
+  function getPendingRewards() public view returns (uint256) {
     return getPendingRewardsOf(msg.sender);
   }
 
-  function getPendingRewardsOf(address _player) public view returns (uint256 _rewards) {
-    uint256 _matches = pendingMatches[_player];
+  function getPendingRewardsOf(address _to) public view returns (uint256 _rewards) {
+    uint256[] memory _matches = pendingMatches[_to];
     uint256 _matchId;
-    uint256 _updatedAt;
 
-    for (uint256 _i = 0; _i < _matches.length; ++i) {
+    for (uint256 _i = 0; _i < _matches.length; ++_i) {
       _matchId = _matches[_i];
-      _updatedAt = matchDoneAt[_matchId];
 
-      if (_getElapsedDays(_updatedAt) >= rewardTimeDue) {
+      if (isRewardAvailable(_matchId)) {
         _rewards = _rewards.add(getMatchRewards(_matchId));
       }
     }
@@ -58,8 +53,37 @@ contract IReward is IMatchOperation {
     return _rewards;
   }
 
-  function _getElapsedDays(uint256 _time) internal view returns (uint256) {
-    uint256 _now = block.timestamp;
-    return _now.sub(_time).div(uint256(60)).div(uint256(60)).div(uint256(24));
+  function withdrawPendingRewards() public {
+    withdrawPendingRewardsFor(msg.sender);
+  }
+
+  function withdrawPendingRewardsFor(address _to) public {
+    uint256[] storage _pendingMatches = pendingMatches[_to];
+
+    uint256[] memory _rewardIndexes = new uint256[](_pendingMatches.length);
+    uint256 _rewards;
+    uint256 _rewardCount;
+
+    uint256 _matchId;
+    for (uint256 _i = 0; _i < _pendingMatches.length; ++_i) {
+      _matchId = _pendingMatches[_i];
+
+      if (isRewardAvailable(_matchId)) {
+        _rewards = _rewards.add(getMatchRewards(_matchId));
+        _rewardIndexes[_rewardCount++] = _i;
+      }
+    }
+
+    require(_rewardIndexes.length > 0 && _rewards > 0);
+
+    // remove reward matches from pending matches
+    uint256 _lastMatchId;
+    for (uint256 _i = _rewardCount - 1; _i >= 0; --_i) {
+      _lastMatchId = _pendingMatches[_pendingMatches.length - 1];
+      _pendingMatches[_rewardIndexes[_i]] = _lastMatchId;
+      _pendingMatches.length--;
+    }
+
+    require(weth.transferFrom(address(this), _to, _rewards));
   }
 }

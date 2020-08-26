@@ -10,7 +10,7 @@ contract IMatch is HasAdmin {
 
   event MatchCreated(uint256 indexed _matchId);
   event MatchCancelled(uint256 indexed _matchId);
-  event MatchDone(uint256 indexed _matchId, uint256 indexed _winner);
+  event MatchDone(uint256 indexed _matchId, address indexed _winner);
 
   event PlayerJoined(uint256 indexed _matchId, address indexed _player);
   event PlayerUnjoined(uint256 indexed _matchId, address indexed _player);
@@ -48,7 +48,7 @@ contract IMatch is HasAdmin {
     emit PlayerThresholdUpdated(_minPlayer, _maxPlayer);
   }
 
-  function _setMatchResult(uint256 _matchId, uint256 _winner) internal onlyCreated(_matchId) {
+  function _setMatchResult(uint256 _matchId, address _winner) internal onlyCreated(_matchId) {
     require(_getTotalPlayer(_matchId) <= maxPlayer);
     require(minPlayer <= _getTotalPlayer(_matchId));
 
@@ -66,7 +66,7 @@ contract IMatch is HasAdmin {
   function _createMatch(uint256 _matchId, address _from) internal {
     require(MatchStatus(matches[_matchId]) == MatchStatus.NotCreated, "this match is created");
 
-    matches[_matchId] = MatchStatus.Created;
+    matches[_matchId] = uint256(MatchStatus.Created);
     _joinMatch(_matchId, _from);
 
     emit MatchCreated(_matchId);
@@ -87,7 +87,7 @@ contract IMatch is HasAdmin {
 
     uint256 _index;
     uint256 _totalPlayer = _getTotalPlayer(_matchId);
-    uint256 memory _players = players[_matchId];
+    address[] storage _players = players[_matchId];
 
     for (uint256 _i = 0; _i < _totalPlayer; _i++) {
       if (players[_matchId][_i] == _from) {
@@ -99,7 +99,7 @@ contract IMatch is HasAdmin {
 
     _players[_index] = lastPlayer;
     _players.length--;
-    playerMark[_matchId] = false;
+    playerMark[_matchId][_from] = false;
 
     emit PlayerUnjoined(_matchId, _from);
 

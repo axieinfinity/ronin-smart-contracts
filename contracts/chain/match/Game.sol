@@ -13,7 +13,8 @@ contract Game is IAppeal {
     uint256 _appealCost,
     uint256 _rewardTimeDue,
     address _weth
-  ) {
+  ) public
+  {
     minPlayer = _minPlayer;
     maxPlayer = _maxPlayer;
     operationCost = _operationCost;
@@ -42,7 +43,7 @@ contract Game is IAppeal {
     }
 
     if (Action(_action) == Action.Appeal) {
-      appeal(_matchId, _from);
+      _appeal(_matchId, _from);
     } else if (Action(_action) == Action.CreateMatch) {
       assembly {_value := calldataload(0x144)}
       _createMatchAndCharge(_matchId, _from, _value);
