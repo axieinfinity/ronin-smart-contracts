@@ -1,11 +1,12 @@
 pragma solidity ^0.5.2;
 
+import "@axie/contract-library/contracts/access/HasOperators.sol";
 import "@axie/contract-library/contracts/math/SafeMath.sol";
 import "./IMatch.sol";
 import "./IMatchOperation.sol";
 
 
-contract IReward is IMatchOperation {
+contract IReward is IMatchOperation, HasOperators {
   using SafeMath for uint256;
 
   event RewardTimeDueUpdated(uint256 indexed _rewardTimeDue);
@@ -26,7 +27,7 @@ contract IReward is IMatchOperation {
     emit RewardTimeDueUpdated(_rewardTimeDue);
   }
 
-  function setMatchResult(uint256 _matchId, address _winner) public onlyAdmin {
+  function setMatchResult(uint256 _matchId, address _winner) public onlyOperator {
     super._setMatchResult(_matchId, _winner);
     pendingMatches[_winner].push(_matchId);
   }

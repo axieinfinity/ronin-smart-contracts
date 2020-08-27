@@ -1,9 +1,7 @@
 /* tslint:disable: no-console */
 import {
   expectTransactionFailed,
-  resetAfterAll,
   web3Pool,
-  expectContractCallFailed,
 } from '@axie/contract-test-utils';
 import BN = require('bn.js');
 import { expect } from 'chai';
@@ -41,6 +39,7 @@ describe('Match contract', () => {
   let bob: string;
   let charles: string;
   let ezreal: string;
+  let server: string;
   let gameContract: GameContract;
   let wethContract: WETHDevContract;
 
@@ -52,7 +51,7 @@ describe('Match contract', () => {
   const initBalance = ethToWei(1000);
 
   before(async () => {
-    [alice, bob, charles, ezreal] = await web3Pool.ethGetAccounts();
+    [alice, bob, charles, ezreal, server] = await web3Pool.ethGetAccounts();
     wethContract = await WETHDevContract.deploy().send(web3Pool);
     await wethContract.addMinters([alice]).send();
     await wethContract.mint(alice, initBalance).send();
@@ -75,6 +74,8 @@ describe('Match contract', () => {
       rewardTimeDue,
       wethContract.address,
     ).send(web3Pool);
+
+    await gameContract.addOperators([server]).send();
   });
 
   describe('Test create, join & unjoin match', () => {
@@ -192,7 +193,7 @@ describe('Match contract', () => {
 
     it('Server: update match result but fail', async () => {
       await expectTransactionFailed(
-        gameContract.setMatchResult(matchId, alice).send(),
+        gameContract.setMatchResult(matchId, alice).send({ from: server }),
       );
     });
 
@@ -210,7 +211,7 @@ describe('Match contract', () => {
     });
 
     it('Server: update match result successfully', async () => {
-      await gameContract.setMatchResult(matchId, alice).sendGetTxHash();
+      await gameContract.setMatchResult(matchId, alice).send({ from: server });
     });
 
     it('Alice: get her rewards but fail because of time due', async () => {
@@ -265,7 +266,7 @@ describe('Match contract', () => {
     });
 
     it('Server: set match result', async () => {
-      await gameContract.setMatchResult(matchId, alice).send();
+      await gameContract.setMatchResult(matchId, alice).send({ from: server });
     });
 
     it('Charles: appeal the match', async () => {
@@ -285,7 +286,7 @@ describe('Match contract', () => {
       const balance = await wethContract.balanceOf(charles).call();
       const appealCost = await gameContract.appealCost().call();
 
-      await gameContract.updateMatchResult(matchId, charles).send();
+      await gameContract.updateMatchResult(matchId, charles).send({ from: server });
 
       const current = await wethContract.balanceOf(charles).call();
       expect(current.toString()).to.eq(balance.add(appealCost).toString());
@@ -293,8 +294,8 @@ describe('Match contract', () => {
 
     it('Server: update winner is Bob but could not', async () => {
       await expectTransactionFailed(
-        gameContract.updateMatchResult(matchId, bob).send(),
-      )
+        gameContract.updateMatchResult(matchId, bob).send({ from: server }),
+      );
     });
 
     it('Alice: withdraw her reward but fail', async () => {
@@ -341,7 +342,7 @@ describe('Match contract', () => {
     });
 
     it('Server: set match result', async () => {
-      await gameContract.setMatchResult(matchId, alice).send();
+      await gameContract.setMatchResult(matchId, alice).send({ from: server });
     });
 
     it('Charles: appeal the match', async () => {
@@ -355,7 +356,7 @@ describe('Match contract', () => {
       const [lastAliceBalance, lastBobBalance, lastCharlesBalance, lastEzrealBalance] =
         await Promise.all([alice, bob, charles, ezreal].map(player => wethContract.balanceOf(player).call()));
 
-      await gameContract.cancelMatchResult(matchId).send();
+      await gameContract.cancelMatchResult(matchId).send({ from: server });
 
       const [aliceBalance, bobBalance, charlesBalance, ezrealBalance] =
         await Promise.all([alice, bob, charles, ezreal].map(player => wethContract.balanceOf(player).call()));
@@ -368,7 +369,7 @@ describe('Match contract', () => {
 
     it('Server: update result but fail', async () => {
       await expectTransactionFailed(
-        gameContract.updateMatchResult(matchId, ezreal).send(),
+        gameContract.updateMatchResult(matchId, ezreal).send({ from: server }),
       );
     });
   });

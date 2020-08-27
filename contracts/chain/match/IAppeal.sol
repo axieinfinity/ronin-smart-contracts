@@ -36,7 +36,7 @@ contract IAppeal is IReward {
 
   function updateMatchResult(uint256 _matchId, address _winner)
     public
-    onlyAdmin
+    onlyOperator
     onlyDoneMatch(_matchId)
     onlyNotResolvedAppealed(_matchId)
   {
@@ -56,7 +56,7 @@ contract IAppeal is IReward {
 
   function cancelMatchResult(uint256 _matchId)
     public
-    onlyAdmin
+    onlyOperator
     onlyDoneMatch(_matchId)
     onlyNotResolvedAppealed(_matchId)
   {
@@ -128,6 +128,7 @@ contract IAppeal is IReward {
     address _appealer = appealedMatches[_matchId]._appealer;
     address _lastWinner = appealedMatches[_matchId]._lastWinner;
     bool _resolved = appealedMatches[_matchId]._resolved;
+
     return _appealer == address(0) && _lastWinner == address(0) && !_resolved;
   }
 }
