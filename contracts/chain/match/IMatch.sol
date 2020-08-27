@@ -28,13 +28,18 @@ contract IMatch is HasAdmin {
   mapping(uint256 => mapping(address => bool)) playerMark;
 
   // Mapping matchId => player
-  mapping(uint256 => address[]) players;
+  mapping(uint256 => address[]) public players;
 
   // Mapping matchId => player
-  mapping(uint256 => address) winners;
+  mapping(uint256 => address) public winners;
 
-  modifier onlyCreated(uint256 _id) {
+  modifier onlyCreatedMatch(uint256 _id) {
     require(MatchStatus(matches[_id]) == MatchStatus.Created);
+    _;
+  }
+
+  modifier onlyDoneMatch(uint256 _id) {
+    require(MatchStatus(matches[_id]) == MatchStatus.Done);
     _;
   }
 
@@ -52,7 +57,7 @@ contract IMatch is HasAdmin {
     return players[_matchId].length;
   }
 
-  function _setMatchResult(uint256 _matchId, address _winner) internal onlyCreated(_matchId) {
+  function _setMatchResult(uint256 _matchId, address _winner) internal onlyCreatedMatch(_matchId) {
     require(getTotalPlayer(_matchId) <= maxPlayer);
     require(minPlayer <= getTotalPlayer(_matchId));
 
@@ -72,7 +77,7 @@ contract IMatch is HasAdmin {
     _joinMatch(_matchId, _from);
   }
 
-  function _joinMatch(uint256 _matchId, address _from) internal onlyCreated(_matchId) {
+  function _joinMatch(uint256 _matchId, address _from) internal onlyCreatedMatch(_matchId) {
     require(players[_matchId].length < maxPlayer, "this match is full");
     require(!playerMark[_matchId][_from], "this player has already joined the match");
 
@@ -82,7 +87,7 @@ contract IMatch is HasAdmin {
     emit PlayerJoined(_matchId, _from);
   }
 
-  function _unjoinMatch(uint256 _matchId, address _from) internal onlyCreated(_matchId) {
+  function _unjoinMatch(uint256 _matchId, address _from) internal onlyCreatedMatch(_matchId) {
     require(playerMark[_matchId][_from], "this player has not joined the match");
 
     uint256 _index;

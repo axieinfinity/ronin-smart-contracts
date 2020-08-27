@@ -10,7 +10,12 @@ contract IReward is IMatchOperation {
 
   event RewardTimeDueUpdated(uint256 indexed _rewardTimeDue);
 
-  uint256 public rewardTimeDue; // day
+  uint256 public rewardTimeDue;
+
+  modifier onlyUnavaiableReward(uint256 _id) {
+    require(!isRewardAvailable(_id));
+    _;
+  }
 
   // Mapping player => matchId[]
   mapping(address => uint256[]) pendingMatches;
@@ -30,8 +35,7 @@ contract IReward is IMatchOperation {
     uint256 _now = block.timestamp;
     uint256 _doneAt = matchDoneAt[_matchId];
 
-    uint256 _elapsedDays = _now.sub(_doneAt).div(uint256(60 * 60 * 24));
-    return _elapsedDays >= rewardTimeDue;
+    return _now >= _doneAt.add(rewardTimeDue);
   }
 
   function getPendingRewards() public view returns (uint256) {
@@ -74,7 +78,7 @@ contract IReward is IMatchOperation {
       }
     }
 
-    require(_rewardCount > 0 && _rewards > 0);
+    require(_rewardCount > 0 && _rewards > 0, "this address has no reward");
 
     // remove reward matches from pending matches
     uint256 _lastMatchId;

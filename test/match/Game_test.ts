@@ -1,18 +1,19 @@
+/* tslint:disable: no-console */
 import {
   expectTransactionFailed,
   resetAfterAll,
   web3Pool,
+  expectContractCallFailed,
 } from '@axie/contract-test-utils';
 import BN = require('bn.js');
-import 'mocha';
-import web3Utils = require('web3-utils');
-
 import { expect } from 'chai';
+import 'mocha';
 // tslint:disable-next-line: no-implicit-dependencies
 import { AbiCoder } from 'web3-eth-abi';
+import web3Utils = require('web3-utils');
+
 import { WETHDevContract } from '../../src';
 import { GameContract } from '../../src/contract/game';
-import { IMatchContract } from '../../src/contract/i_match';
 
 const ethToWei = (eth: number) => new BN(web3Utils.toWei(eth.toString(), 'ether'));
 
@@ -23,7 +24,7 @@ enum Action {
   UnjoinMatch = 3,
 }
 
-const extraDataToGame = (action: Action, matchId: BN, joinFee?: number | string) => {
+const getExtraData = (action: Action, matchId: BN, joinFee?: number | string) => {
   const types = ['uint256', 'uint256'];
   const values = [new BN(action).toString(), matchId.toString()];
 
@@ -43,6 +44,11 @@ describe('Match contract', () => {
   let gameContract: GameContract;
   let wethContract: WETHDevContract;
 
+  const rewardTimeDueMinutes = 0.5;
+
+  const waitForReward = () =>
+    new Promise((resolve, _) => setTimeout(() => resolve(), rewardTimeDueMinutes * 60 * 1000));
+
   const initBalance = ethToWei(1000);
 
   before(async () => {
@@ -59,7 +65,7 @@ describe('Match contract', () => {
     const operationCost = ethToWei(100);
     const unjoinCost = ethToWei(25);
     const appealCost = ethToWei(50);
-    const rewardTimeDue = new BN(0);
+    const rewardTimeDue = new BN(rewardTimeDueMinutes * 60);
     gameContract = await GameContract.deploy(
       minPlayer,
       maxPlayer,
@@ -77,7 +83,7 @@ describe('Match contract', () => {
 
     it('Alice: approve and create a match but fail', async () => {
       const joinFeeDummy = ethToWei(2);
-      const extraData = extraDataToGame(Action.CreateMatch, matchId, joinFeeDummy.toString(10));
+      const extraData = getExtraData(Action.CreateMatch, matchId, joinFeeDummy.toString(10));
 
       await expectTransactionFailed(
         wethContract.approveAndCall(
@@ -89,7 +95,7 @@ describe('Match contract', () => {
     });
 
     it('Alice: approve and create a match', async () => {
-      const extraData = extraDataToGame(Action.CreateMatch, matchId, joinFee.toString(10));
+      const extraData = getExtraData(Action.CreateMatch, matchId, joinFee.toString(10));
 
       await wethContract.approveAndCall(
         gameContract.address,
@@ -102,7 +108,7 @@ describe('Match contract', () => {
     });
 
     it('Bob: approve and join a match', async () => {
-      const extraData = extraDataToGame(Action.JoinMatch, matchId, joinFee.toString(10));
+      const extraData = getExtraData(Action.JoinMatch, matchId);
 
       await wethContract.approveAndCall(
         gameContract.address,
@@ -164,8 +170,8 @@ describe('Match contract', () => {
       expect(new BN(1).toString()).to.eq(players.toString());
     });
 
-    it('Alice, Bob: approve & join a match ', async () => {
-      const extraData = extraDataToGame(Action.JoinMatch, matchId, joinFee.toString(10));
+    it('Alice, Bob: approve & join a match', async () => {
+      const extraData = getExtraData(Action.JoinMatch, matchId);
 
       await wethContract.approveAndCall(
         gameContract.address,
@@ -191,7 +197,7 @@ describe('Match contract', () => {
     });
 
     it('Charles: join match', async () => {
-      const extraData = extraDataToGame(Action.JoinMatch, matchId, joinFee.toString(10));
+      const extraData = getExtraData(Action.JoinMatch, matchId);
 
       await wethContract.approveAndCall(
         gameContract.address,
@@ -204,20 +210,32 @@ describe('Match contract', () => {
     });
 
     it('Server: update match result successfully', async () => {
-      await gameContract.setMatchResult(matchId, alice).send();
+      await gameContract.setMatchResult(matchId, alice).sendGetTxHash();
+    });
+
+    it('Alice: get her rewards but fail because of time due', async () => {
+      await expectTransactionFailed(
+        gameContract.withdrawPendingRewards().send({ from: alice }),
+      );
+    });
+
+    it('Bob: appeal but fail because of time due', async () => {
+      await waitForReward();
+      const appealCost = await gameContract.appealCost().call();
+      const extraData = getExtraData(Action.Appeal, matchId);
+      await expectTransactionFailed(
+        wethContract.approveAndCall(gameContract.address, appealCost, extraData).send({ from: bob }),
+      );
     });
 
     it('Alice: withdraw her reward', async () => {
       const originBalance = await wethContract.balanceOf(alice).call();
-      const reward = await gameContract.getPendingRewards().call();
-      const operationCost = await gameContract.operationCost().call();
-
-      expect(reward.toString()).to.eq(joinFee.muln(4).sub(operationCost).toString());
+      const rewards = await gameContract.getMatchRewards(matchId).call();
 
       await gameContract.withdrawPendingRewards().send({ from: alice });
 
       const balance = await wethContract.balanceOf(alice).call();
-      expect(balance.toString()).to.eq(originBalance.add(reward).toString());
+      expect(balance.toString()).to.eq(originBalance.add(rewards).toString());
     });
 
     it('Alice: re-withdraw her reward', async () => {
@@ -227,7 +245,7 @@ describe('Match contract', () => {
     });
   });
 
-  describe('Test a normal match with appealing', () => {
+  describe('Test a match with appealing & update result', () => {
     const joinFee = ethToWei(50);
     const matchId = new BN(2);
 
@@ -235,10 +253,10 @@ describe('Match contract', () => {
       await wethContract.approveAndCall(
         gameContract.address,
         joinFee,
-        extraDataToGame(Action.CreateMatch, matchId, joinFee.toString(10)),
+        getExtraData(Action.CreateMatch, matchId, joinFee.toString(10)),
       ).send({ from: alice });
 
-      const extraData = extraDataToGame(Action.JoinMatch, matchId, joinFee.toString(10));
+      const extraData = getExtraData(Action.JoinMatch, matchId);
       await Promise.all([
         wethContract.approveAndCall(gameContract.address, joinFee, extraData).send({ from: bob }),
         wethContract.approveAndCall(gameContract.address, joinFee, extraData).send({ from: charles }),
@@ -252,8 +270,8 @@ describe('Match contract', () => {
 
     it('Charles: appeal the match', async () => {
       const appealCost = await gameContract.appealCost().call();
-      const extraData = extraDataToGame(Action.Appeal, matchId);
-      await wethContract.approveAndCall(gameContract.address, appealCost, extraData).send();
+      const extraData = getExtraData(Action.Appeal, matchId);
+      await wethContract.approveAndCall(gameContract.address, appealCost, extraData).send({ from: charles });
     });
 
     it('Alice: withdraw her reward but fail', async () => {
@@ -262,9 +280,21 @@ describe('Match contract', () => {
       );
     });
 
-    it('Server: update match result', async () => {
+    it('Server: update winner is Charles & pay money back to appealer', async () => {
       await expectTransactionFailed(gameContract.setMatchResult(matchId, charles).send());
+      const balance = await wethContract.balanceOf(charles).call();
+      const appealCost = await gameContract.appealCost().call();
+
       await gameContract.updateMatchResult(matchId, charles).send();
+
+      const current = await wethContract.balanceOf(charles).call();
+      expect(current.toString()).to.eq(balance.add(appealCost).toString());
+    });
+
+    it('Server: update winner is Bob but could not', async () => {
+      await expectTransactionFailed(
+        gameContract.updateMatchResult(matchId, bob).send(),
+      )
     });
 
     it('Alice: withdraw her reward but fail', async () => {
@@ -274,7 +304,72 @@ describe('Match contract', () => {
     });
 
     it('Charles: withdraw his reward', async () => {
+      const balance = await wethContract.balanceOf(charles).call();
+      const rewards = await gameContract.getMatchRewards(matchId).call();
+
+      await waitForReward();
       await gameContract.withdrawPendingRewardsFor(charles).send();
+
+      const current = await wethContract.balanceOf(charles).call();
+      expect(current.toString()).to.eq(balance.add(rewards).toString());
+    });
+
+    it('Charles: double withdraw', async () => {
+      await expectTransactionFailed(
+        gameContract.withdrawPendingRewardsFor(charles).send(),
+      );
+    });
+  });
+
+  describe('Test a match with appealing & cancel result', () => {
+    const joinFee = ethToWei(50);
+    const matchId = new BN(3);
+
+    it('Alice, Bob, Charles, Ezreal: join match', async () => {
+      await wethContract.approveAndCall(
+        gameContract.address,
+        joinFee,
+        getExtraData(Action.CreateMatch, matchId, joinFee.toString(10)),
+      ).send({ from: alice });
+
+      const extraData = getExtraData(Action.JoinMatch, matchId);
+      await Promise.all([
+        wethContract.approveAndCall(gameContract.address, joinFee, extraData).send({ from: bob }),
+        wethContract.approveAndCall(gameContract.address, joinFee, extraData).send({ from: charles }),
+        wethContract.approveAndCall(gameContract.address, joinFee, extraData).send({ from: ezreal }),
+      ]);
+    });
+
+    it('Server: set match result', async () => {
+      await gameContract.setMatchResult(matchId, alice).send();
+    });
+
+    it('Charles: appeal the match', async () => {
+      const appealCost = await gameContract.appealCost().call();
+      const extraData = getExtraData(Action.Appeal, matchId);
+      await wethContract.approveAndCall(gameContract.address, appealCost, extraData).send({ from: charles });
+    });
+
+    it('Server: cancel result and pay back for players & everyone is happy', async () => {
+      const appealCost = await gameContract.appealCost().call();
+      const [lastAliceBalance, lastBobBalance, lastCharlesBalance, lastEzrealBalance] =
+        await Promise.all([alice, bob, charles, ezreal].map(player => wethContract.balanceOf(player).call()));
+
+      await gameContract.cancelMatchResult(matchId).send();
+
+      const [aliceBalance, bobBalance, charlesBalance, ezrealBalance] =
+        await Promise.all([alice, bob, charles, ezreal].map(player => wethContract.balanceOf(player).call()));
+
+      expect(aliceBalance.toString()).to.eq(lastAliceBalance.add(joinFee).toString());
+      expect(bobBalance.toString()).to.eq(lastBobBalance.add(joinFee).toString());
+      expect(charlesBalance.toString()).to.eq(lastCharlesBalance.add(joinFee).add(appealCost).toString());
+      expect(ezrealBalance.toString()).to.eq(lastEzrealBalance.add(joinFee).toString());
+    });
+
+    it('Server: update result but fail', async () => {
+      await expectTransactionFailed(
+        gameContract.updateMatchResult(matchId, ezreal).send(),
+      );
     });
   });
 });
