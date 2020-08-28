@@ -9,6 +9,8 @@ import "../common/Validator.sol";
  * @dev Simple validator contract
  */
 contract MainchainValidator is Validator, HasAdmin {
+  uint256 nonce;
+
   constructor(
     address[] memory _validators,
     uint256 _num,
@@ -18,15 +20,15 @@ contract MainchainValidator is Validator, HasAdmin {
 
   function addValidators(address[] calldata _validators) external onlyAdmin {
     for (uint256 _i; _i < _validators.length; ++_i) {
-      _addValidator(_validators[_i]);
+      _addValidator(nonce++, _validators[_i]);
     }
   }
 
   function removeValidator(uint256 _index) external onlyAdmin {
-    _removeValidator(_index);
+    _removeValidator(nonce++, _index);
   }
 
   function updateQuorum(uint256 _numerator, uint256 _denominator) external onlyAdmin {
-    _updateQuorum(_numerator, _denominator);
+    _updateQuorum(nonce++, _numerator, _denominator);
   }
 }

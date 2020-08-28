@@ -40,17 +40,17 @@ contract Validator is IValidator {
     return _voteCount.mul(denom) > num.mul(validatorCount);
   }
 
-  function _addValidator(address _validator) internal {
+  function _addValidator(uint256 _id, address _validator) internal {
     require(!validatorMap[_validator]);
 
     validators.push(_validator);
     validatorMap[_validator] = true;
     validatorCount++;
 
-    emit ValidatorAdded(_validator);
+    emit ValidatorAdded(_id, _validator);
   }
 
-  function _removeValidator(uint256 _index) internal {
+  function _removeValidator(uint256 _id, uint256 _index) internal {
     require(_index < validatorCount);
 
     address _validator = validators[_index];
@@ -63,16 +63,16 @@ contract Validator is IValidator {
     validatorCount--;
     validators.length--;
 
-    emit ValidatorRemoved(_validator);
+    emit ValidatorRemoved(_id, _validator);
   }
 
-  function _updateQuorum(uint256 _numerator, uint256 _denominator) internal {
+  function _updateQuorum(uint256 _id, uint256 _numerator, uint256 _denominator) internal {
     uint256 _previousNumerator = num;
     uint256 _previousDenominator = denom;
 
     num = _numerator;
     denom = _denominator;
 
-    emit ThresholdUpdated(_numerator, _denominator, _previousNumerator, _previousDenominator);
+    emit ThresholdUpdated(_id, _numerator, _denominator, _previousNumerator, _previousDenominator);
   }
 }

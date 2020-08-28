@@ -2,9 +2,10 @@ pragma solidity ^0.5.2;
 
 
 contract IValidator {
-  event ValidatorAdded(address indexed validator);
-  event ValidatorRemoved(address indexed validator);
+  event ValidatorAdded(uint256 _id, address indexed validator);
+  event ValidatorRemoved(uint256 _id, address indexed validator);
   event ThresholdUpdated(
+    uint256 _id,
     uint256 indexed numerator,
     uint256 indexed denominator,
     uint256 previousNumerator,

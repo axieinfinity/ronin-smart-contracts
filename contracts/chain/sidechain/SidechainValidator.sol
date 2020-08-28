@@ -29,7 +29,7 @@ contract SidechainValidator is Validator {
 
     Acknowledgement.Status _status = _getAck().acknowledge(_getAckChannel(), _id, _hash, msg.sender);
     if (_status == Acknowledgement.Status.FirstApproved) {
-      _addValidator(_validator);
+      _addValidator(_id, _validator);
     }
   }
 
@@ -40,7 +40,7 @@ contract SidechainValidator is Validator {
 
     Acknowledgement.Status _status = _getAck().acknowledge(_getAckChannel(), _id, _hash, msg.sender);
     if (_status == Acknowledgement.Status.FirstApproved) {
-      _removeValidator(_index);
+      _removeValidator(_id, _index);
     }
   }
 
@@ -49,7 +49,7 @@ contract SidechainValidator is Validator {
 
     Acknowledgement.Status _status = _getAck().acknowledge(_getAckChannel(), _id, _hash, msg.sender);
     if (_status == Acknowledgement.Status.FirstApproved) {
-      _updateQuorum(_numerator, _denominator);
+      _updateQuorum(_id, _numerator, _denominator);
     }
   }
 
