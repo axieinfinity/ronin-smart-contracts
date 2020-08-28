@@ -25,7 +25,7 @@ contract MainchainGatewayStorage is ProxyStorage, Pausable {
   event TokenWithdrew(
     uint256 indexed withdrawId,
     address indexed owner,
-    address indexed tokenAddres,
+    address indexed tokenAddress,
     uint256 tokenNumber
   );
 

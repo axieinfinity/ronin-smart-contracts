@@ -23,7 +23,7 @@ contract SidechainGatewayStorage is ProxyStorage, Pausable {
   event TokenWithdrew(
     uint256 indexed withdrawId,
     address indexed owner,
-    address indexed tokenAddres,
+    address indexed tokenAddress,
     address mainchainAddress,
     uint32  standard,
     uint256 tokenNumber
@@ -32,7 +32,7 @@ contract SidechainGatewayStorage is ProxyStorage, Pausable {
   event RequestTokenWithdrawalSigAgain(
     uint256 indexed withdrawalId,
     address indexed owner,
-    address indexed tokenAddres,
+    address indexed tokenAddress,
     address mainchainAddress,
     uint32  standard,
     uint256 tokenNumber
