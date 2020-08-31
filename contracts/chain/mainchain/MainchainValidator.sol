@@ -24,8 +24,8 @@ contract MainchainValidator is Validator, HasAdmin {
     }
   }
 
-  function removeValidator(uint256 _index) external onlyAdmin {
-    _removeValidator(nonce++, _index);
+  function removeValidator(address _validator) external onlyAdmin {
+    _removeValidator(nonce++, _validator);
   }
 
   function updateQuorum(uint256 _numerator, uint256 _denominator) external onlyAdmin {

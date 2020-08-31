@@ -33,14 +33,14 @@ contract SidechainValidator is Validator {
     }
   }
 
-  function removeValidator(uint256 _id, uint256 _index) external onlyValidator {
-    require(_index < validatorCount);
+  function removeValidator(uint256 _id, address _validator) external onlyValidator {
+    require(isValidator(_validator));
 
-    bytes32 _hash = keccak256(abi.encode("removeValidator", _index));
+    bytes32 _hash = keccak256(abi.encode("removeValidator", _validator));
 
     Acknowledgement.Status _status = _getAck().acknowledge(_getAckChannel(), _id, _hash, msg.sender);
     if (_status == Acknowledgement.Status.FirstApproved) {
-      _removeValidator(_id, _index);
+      _removeValidator(_id, _validator);
     }
   }
 

@@ -50,18 +50,25 @@ contract Validator is IValidator {
     emit ValidatorAdded(_id, _validator);
   }
 
-  function _removeValidator(uint256 _id, uint256 _index) internal {
-    require(_index < validatorCount);
+  function _removeValidator(uint256 _id, address _validator) internal {
+    require(isValidator(_validator));
 
-    address _validator = validators[_index];
-    validatorMap[_validator] = false;
+    uint256 _index;
+    address _lastValidator = validators[validatorCount - 1];
 
-    for (uint256 _i = _index; _i + 1 < validatorCount; _i++) {
-      validators[_i] = validators[_i + 1];
+    for (uint256 _i = 0; _i < validatorCount; _i++) {
+      if (validators[_i] == _validator) {
+        _index = _i;
+        break;
+      }
     }
 
-    validatorCount--;
+    validatorMap[_validator] = false;
+
+    validators[_index] = _lastValidator;
     validators.length--;
+
+    validatorCount--;
 
     emit ValidatorRemoved(_id, _validator);
   }
