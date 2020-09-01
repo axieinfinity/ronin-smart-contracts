@@ -7,7 +7,8 @@ import "../common/Registry.sol";
 
 
 contract SidechainGatewayProxy is Proxy, SidechainGatewayStorage {
-  constructor(address _proxyTo, address _registry) public Proxy(_proxyTo) {
+  constructor(address _proxyTo, address _registry, uint256 _maxPendingWithdrawal) public Proxy(_proxyTo) {
     registry = Registry(_registry);
+    maxPendingWithdrawal = _maxPendingWithdrawal;
   }
 }

@@ -69,9 +69,14 @@ contract SidechainGatewayStorage is ProxyStorage, Pausable {
 
   // Data for single users
   mapping(address => uint256[]) pendingWithdrawals;
+  uint256 public maxPendingWithdrawal;
 
   function updateRegistry(address _registry) external onlyAdmin {
     registry = Registry(_registry);
+  }
+
+  function updateMaxPendingWithdrawal(uint256 _maxPendingWithdrawal) public onlyAdmin {
+    maxPendingWithdrawal = _maxPendingWithdrawal;
   }
 
   function _getValidator() internal view returns (Validator _validator) {

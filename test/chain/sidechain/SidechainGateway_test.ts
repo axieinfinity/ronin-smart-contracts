@@ -89,7 +89,7 @@ describe('Sidechain gateway', () => {
     await registry.updateContract(acknowledgementContract, acknowledgement.address).send();
 
     sidechainGatewayProxy = await SidechainGatewayProxyContract
-      .deploy(sidechainGateway.address, registry.address).send(web3Pool);
+      .deploy(sidechainGateway.address, registry.address, new BN(10)).send(web3Pool);
 
     // Use the contract logic in place of proxy address
     sidechainGateway = new SidechainGatewayManagerContract(sidechainGatewayProxy.address, web3Pool);

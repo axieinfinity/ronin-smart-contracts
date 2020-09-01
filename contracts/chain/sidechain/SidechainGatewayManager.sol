@@ -21,8 +21,6 @@ contract SidechainGatewayManager is SidechainGatewayStorage {
   using SafeMath for uint256;
   using ECVerify for bytes32;
 
-  uint256 constant MAX_PENDING_WITHDRAWAL = 10;
-
   modifier onlyMappedToken(address _token, uint32 _standard) {
     require(registry.isTokenMapped(_token, _standard, false), "Token is not mapped");
     _;
@@ -211,7 +209,7 @@ contract SidechainGatewayManager is SidechainGatewayStorage {
     withdrawalCount++;
 
     pendingWithdrawals[_owner].push(_withdrawalId);
-    require(pendingWithdrawals[_owner].length <= MAX_PENDING_WITHDRAWAL);
+    require(pendingWithdrawals[_owner].length <= maxPendingWithdrawal);
     emit TokenWithdrew(
       _withdrawalId,
       _owner,
