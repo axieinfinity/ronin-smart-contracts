@@ -4,7 +4,7 @@ import "@axie/contract-library/contracts/proxy/ProxyStorage.sol";
 import "@axie/contract-library/contracts/lifecycle/Pausable.sol";
 import "../common/Validator.sol";
 import "../common/Registry.sol";
-import "../common/Acknowledgement.sol";
+import "./Acknowledgement.sol";
 
 
 /**

@@ -74,13 +74,18 @@ describe('Sidechain gateway', () => {
     erc721 = await ERC721FullMintableContract.deploy('ERC721', '721', '').send(web3Pool);
     registry = await RegistryContract.deploy().send(web3Pool);
 
+    acknowledgement = await AcknowledgementContract.deploy(
+      alice, // dummy validator
+      ).send(web3Pool);
+
     validator = await SidechainValidatorContract.deploy(
-      registry.address,
+      acknowledgement.address,
       [alice, bob, charles],
       new BN(19),
       new BN(30),
     ).send(web3Pool);
-    acknowledgement = await AcknowledgementContract.deploy(registry.address).send(web3Pool);
+
+    await acknowledgement.updateValidator(validator.address).send();
 
     const validatorContract = await registry.VALIDATOR().call();
     await registry.updateContract(validatorContract, validator.address).send();

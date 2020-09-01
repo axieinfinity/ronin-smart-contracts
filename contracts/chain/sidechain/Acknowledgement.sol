@@ -2,15 +2,14 @@ pragma solidity ^0.5.2;
 
 import "@axie/contract-library/contracts/access/HasAdmin.sol";
 import "@axie/contract-library/contracts/access/HasOperators.sol";
-import "./Registry.sol";
-import "./Validator.sol";
+import "../common/Validator.sol";
 
 
 contract Acknowledgement is HasOperators {
   // Acknowledge status
   enum Status {NotApproved, FirstApproved, AlreadyApproved}
   // Mapping from channel => boolean
-  mapping(bytes32 => bool) channels;
+  mapping(bytes32 => bool) enabledChannels;
   // Mapping from channel => id => validator => hash entry
   mapping(bytes32 => mapping(uint256 => mapping(address => bytes32))) validatorAck;
   // Mapping from channel => id => hash => ack count
@@ -22,13 +21,13 @@ contract Acknowledgement is HasOperators {
   string public constant WITHDRAWAL_CHANNEL = "WITHDRAWAL_CHANNEL";
   string public constant VALIDATOR_CHANNEL = "VALIDATOR_CHANNEL";
 
-  Registry public registry;
+  Validator public validator;
 
-  constructor (address _registry) public {
+  constructor (address _validator) public {
     addChannel(DEPOSIT_CHANNEL);
     addChannel(WITHDRAWAL_CHANNEL);
     addChannel(VALIDATOR_CHANNEL);
-    registry = Registry(_registry);
+    validator = Validator(_validator);
   }
 
   function getChannel(string memory _name) public view returns (bytes32 _channel) {
@@ -38,17 +37,17 @@ contract Acknowledgement is HasOperators {
 
   function addChannel(string memory _name) public onlyAdmin {
     bytes32 _channel = _getHash(_name);
-    channels[_channel] = true;
+    enabledChannels[_channel] = true;
   }
 
   function removeChannel(string memory _name) public onlyAdmin {
     bytes32 _channel = _getHash(_name);
     _validChannel(_channel);
-    delete channels[_channel];
+    delete enabledChannels[_channel];
   }
 
-  function updateRegistry(address _registry) public onlyAdmin {
-    registry = Registry(_registry);
+  function updateValidator(address _validator) public onlyAdmin {
+    validator = Validator(_validator);
   }
 
   function acknowledge(bytes32 _channel, uint256 _id, bytes32 _hash, address _validator) public onlyOperator returns (Status) {
@@ -59,7 +58,7 @@ contract Acknowledgement is HasOperators {
     uint8 _status = ackStatus[_channel][_id][_hash];
     uint256 _count = ackCount[_channel][_id][_hash];
 
-    if (_getValidatorContract().checkThreshold(_count + 1)) {
+    if (validator.checkThreshold(_count + 1)) {
       if (_status == uint8(Status.NotApproved)) {
         ackStatus[_channel][_id][_hash] = uint8(Status.FirstApproved);
       } else {
@@ -76,11 +75,7 @@ contract Acknowledgement is HasOperators {
     _hash = keccak256(abi.encode(_name));
   }
 
-  function _getValidatorContract() internal view returns (Validator _validator) {
-    _validator = Validator(registry.getContract(registry.VALIDATOR()));
-  }
-
   function _validChannel(bytes32 _hash) internal view {
-    require(channels[_hash], "invalid channel");
+    require(enabledChannels[_hash], "invalid channel");
   }
 }
