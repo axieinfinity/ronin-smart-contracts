@@ -18,10 +18,12 @@ contract SidechainValidator is Validator {
   }
 
   constructor(
+    address _registry,
     address[] memory _validators,
     uint256 _num,
     uint256 _denom
   ) Validator(_validators, _num, _denom) public {
+    registry = Registry(_registry);
   }
 
   function addValidator(uint256 _id, address _validator) external onlyValidator {
