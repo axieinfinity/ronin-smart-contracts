@@ -16,6 +16,7 @@ contract Registry is HasAdmin {
     uint32 standard
   );
 
+  string public constant GATEWAY = "GATEWAY";
   string public constant WETH_TOKEN = "WETH_TOKEN";
   string public constant VALIDATOR = "VALIDATOR";
   string public constant ACKNOWLEDGEMENT = "ACKNOWLEDGEMENT";
