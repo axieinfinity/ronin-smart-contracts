@@ -7,7 +7,7 @@ import { expect } from 'chai';
 import * as _ from 'lodash';
 import 'mocha';
 
-import { RegistryContract } from '../../src/contract/registry';
+import { RegistryContract } from '../../../src/contract/registry';
 
 describe('Registry', () => {
   resetAfterAll();

@@ -17,10 +17,7 @@ contract WETHDev is IWETH, ERC20Detailed, ERC20Mintable {
     uint256 value
   );
 
-  constructor ()
-    ERC20Detailed("Wrapped Ether", "WETH", 18)
-    public
-  {
+  constructor () ERC20Detailed("Wrapped Ether", "WETH", 18) public {
   }
 
   function deposit() external payable {

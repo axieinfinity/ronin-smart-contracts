@@ -2,7 +2,8 @@ pragma solidity ^0.5.2;
 
 import "@axie/contract-library/contracts/proxy/ProxyStorage.sol";
 import "@axie/contract-library/contracts/lifecycle/Pausable.sol";
-import "../common/IValidator.sol";
+import "./MainchainValidator.sol";
+import "../common/Validator.sol";
 import "../common/Registry.sol";
 
 
@@ -24,7 +25,7 @@ contract MainchainGatewayStorage is ProxyStorage, Pausable {
   event TokenWithdrew(
     uint256 indexed withdrawId,
     address indexed owner,
-    address indexed tokenAddres,
+    address indexed tokenAddress,
     uint256 tokenNumber
   );
 
@@ -43,8 +44,6 @@ contract MainchainGatewayStorage is ProxyStorage, Pausable {
   }
 
   Registry public registry;
-  IValidator public validator;
-  uint256 public withdrawalQuorum;
 
   uint256 public depositCount;
   DepositEntry[] public deposits;
@@ -52,13 +51,5 @@ contract MainchainGatewayStorage is ProxyStorage, Pausable {
 
   function updateRegistry(address _registry) external onlyAdmin {
     registry = Registry(_registry);
-  }
-
-  function updateValidator(address _validator) external onlyAdmin {
-    validator = IValidator(_validator);
-  }
-
-  function updateQuorum(uint256 _quorum) external onlyAdmin {
-    withdrawalQuorum = _quorum;
   }
 }

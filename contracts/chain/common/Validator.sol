@@ -1,53 +1,85 @@
 pragma solidity ^0.5.2;
 
-import "@axie/contract-library/contracts/access/HasAdmin.sol";
+import "@axie/contract-library/contracts/math/SafeMath.sol";
 import "./IValidator.sol";
 
-/**
- * @title Validator
- * @dev Simple validator contract
- */
-contract Validator is IValidator, HasAdmin {
+
+contract Validator is IValidator {
+  using SafeMath for uint256;
+
+  mapping(address => bool) validatorMap;
   address[] public validators;
   uint256 public validatorCount;
-  mapping (address => bool) validatorMap;
+  uint256 public num;
+  uint256 public denom;
 
-  constructor() public {}
+  constructor(address[] memory _validators, uint256 _num, uint256 _denom) public {
+    validators = _validators;
+    validatorCount = _validators.length;
 
-  function addValidators(address[] calldata _validators) external onlyAdmin {
     address _validator;
 
-    for (uint256 i = 0; i < _validators.length; i++) {
-      _validator = _validators[i];
+    for (uint256 _i = 0; _i < validatorCount; _i++) {
+      _validator = _validators[_i];
+      validatorMap[_validator] = true;
+    }
 
-      if (!validatorMap[_validator]) {
-        validators.push(_validator);
-        validatorMap[_validator] = true;
-        emit ValidatorAdded(_validator);
+    num = _num;
+    denom = _denom;
+  }
+
+  function isValidator(address _addr) public view returns (bool) {
+    return validatorMap[_addr];
+  }
+
+  function getValidators() public view returns (address[] memory _validators) {
+    _validators = validators;
+  }
+
+  function checkThreshold(uint256 _voteCount) public view returns (bool) {
+    return _voteCount.mul(denom) > num.mul(validatorCount);
+  }
+
+  function _addValidator(uint256 _id, address _validator) internal {
+    require(!validatorMap[_validator]);
+
+    validators.push(_validator);
+    validatorMap[_validator] = true;
+    validatorCount++;
+
+    emit ValidatorAdded(_id, _validator);
+  }
+
+  function _removeValidator(uint256 _id, address _validator) internal {
+    require(isValidator(_validator));
+
+    uint256 _index;
+    address _lastValidator = validators[validatorCount - 1];
+
+    for (uint256 _i = 0; _i < validatorCount; _i++) {
+      if (validators[_i] == _validator) {
+        _index = _i;
+        break;
       }
     }
-  }
 
-  function removeValidator(uint256 _index) external onlyAdmin {
-    require(_index < validatorCount);
-
-    address _validator = validators[_index];
     validatorMap[_validator] = false;
-    for (uint256 _i = _index; _i + 1 < validatorCount; _i++) {
-      validators[_i] = validators[_i + 1];
-    }
 
-    validatorCount--;
+    validators[_index] = _lastValidator;
     validators.length--;
 
-    emit ValidatorRemoved(_validator);
+    validatorCount--;
+
+    emit ValidatorRemoved(_id, _validator);
   }
 
-  function isValidator(address _addr) public view returns (bool _result) {
-    _result = validatorMap[_addr];
-  }
+  function _updateQuorum(uint256 _id, uint256 _numerator, uint256 _denominator) internal {
+    uint256 _previousNumerator = num;
+    uint256 _previousDenominator = denom;
 
-  function getValidators() public view returns(address[] memory _validators) {
-    _validators = validators;
+    num = _numerator;
+    denom = _denominator;
+
+    emit ThresholdUpdated(_id, _numerator, _denominator, _previousNumerator, _previousDenominator);
   }
 }
