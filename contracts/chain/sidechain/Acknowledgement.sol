@@ -71,8 +71,8 @@ contract Acknowledgement is HasOperators {
     return Status(ackStatus[_channel][_id][_hash]);
   }
 
-  function isValidatorEligible(bytes32 _channel, uint256 _id, address _validator) public view returns (bool) {
-    return validatorAck[_channel][_id][_validator] == bytes32(0);
+  function isValidatorAcknowledged(bytes32 _channel, uint256 _id, address _validator) public view returns (bool) {
+    return validatorAck[_channel][_id][_validator] != bytes32(0);
   }
 
   function _getHash(string memory _name) internal pure returns (bytes32 _hash) {
