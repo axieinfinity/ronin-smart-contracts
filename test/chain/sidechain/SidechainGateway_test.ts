@@ -59,6 +59,7 @@ describe('Sidechain gateway', () => {
   let alice: string;
   let bob: string;
   let charles: string;
+  let dan: string;
   let sidechainGateway: SidechainGatewayManagerContract;
   let registry: RegistryContract;
   let validator: SidechainValidatorContract;
@@ -68,7 +69,7 @@ describe('Sidechain gateway', () => {
   let erc721: ERC721FullMintableContract;
 
   before(async () => {
-    [alice, bob, charles] = await web3Pool.ethGetAccounts();
+    [alice, bob, charles, dan] = await web3Pool.ethGetAccounts();
     sidechainGateway = await SidechainGatewayManagerContract.deploy().send(web3Pool);
     weth = await WETHDevContract.deploy().send(web3Pool);
     erc721 = await ERC721FullMintableContract.deploy('ERC721', '721', '').send(web3Pool);
@@ -101,7 +102,7 @@ describe('Sidechain gateway', () => {
 
     await weth.addMinters([sidechainGateway.address, alice]).send();
     await erc721.addMinters([sidechainGateway.address, alice]).send();
-    await acknowledgement.addOperators([sidechainGateway.address]).send();
+    await acknowledgement.addOperators([sidechainGateway.address, validator.address]).send();
   });
 
   describe('test deposit', async () => {
@@ -345,6 +346,41 @@ describe('Sidechain gateway', () => {
     it('should be able to request signature again', async () => {
       await expectTransactionFailed(sidechainGateway.requestSignatureAgain(new BN(0)).send());
       await sidechainGateway.requestSignatureAgain(new BN(0)).send({ from: charles });
+    });
+  });
+
+  describe('test validator', async () => {
+    it('Alice, Bob & Charles are validators', async () => {
+      const aliceResult = await validator.isValidator(alice).call();
+      const bobResult = await validator.isValidator(bob).call();
+      const charlesResult = await validator.isValidator(charles).call();
+
+      expect(aliceResult).to.eq(true);
+      expect(bobResult).to.eq(true);
+      expect(charlesResult).to.eq(true);
+    });
+
+    it('Add Dan', async () => {
+      await validator.addValidator(new BN(0), dan).send({ from: alice });
+      const danResult = await validator.isValidator(dan).call();
+
+      expect(danResult).to.eq(false);
+
+      await validator.addValidator(new BN(0), dan).send({ from: bob });
+      const danResultAfter = await validator.isValidator(dan).call();
+
+      expect(danResultAfter).to.eq(true);
+    });
+
+    it('Update quorum', async () => {
+      await validator.updateQuorum(new BN(1), new BN(29), new BN(40)).send({ from: alice });
+      await validator.updateQuorum(new BN(1), new BN(29), new BN(40)).send({ from: dan });
+      await validator.updateQuorum(new BN(1), new BN(29), new BN(40)).send({ from: charles });
+
+      const num = await validator.num().call();
+      const denom = await validator.denom().call();
+      expect(num.toString()).to.eq('29');
+      expect(denom.toString()).to.eq('40');
     });
   });
 });
