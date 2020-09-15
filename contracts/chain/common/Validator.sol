@@ -74,6 +74,7 @@ contract Validator is IValidator {
   }
 
   function _updateQuorum(uint256 _id, uint256 _numerator, uint256 _denominator) internal {
+    require(_numerator < _denominator);
     uint256 _previousNumerator = num;
     uint256 _previousDenominator = denom;
 
