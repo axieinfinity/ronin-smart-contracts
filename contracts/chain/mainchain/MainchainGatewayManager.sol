@@ -32,7 +32,7 @@ contract MainchainGatewayManager is MainchainGatewayStorage {
   }
 
   // Should be able to withdraw from WETH
-  function() external payable {} 
+  function() external payable {}
 
   function depositEth() external whenNotPaused payable returns (uint256) {
     return depositEthFor(msg.sender);
