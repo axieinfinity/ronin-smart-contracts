@@ -351,7 +351,7 @@ describe('Sidechain gateway', () => {
   });
 
   describe('test validator', async () => {
-    it('Alice, Bob & Charles are validators', async () => {
+    it('Alice, Bob & Charles should be validators', async () => {
       const aliceResult = await validator.isValidator(alice).call();
       const bobResult = await validator.isValidator(bob).call();
       const charlesResult = await validator.isValidator(charles).call();
@@ -361,39 +361,44 @@ describe('Sidechain gateway', () => {
       expect(charlesResult).to.eq(true);
     });
 
-    it('Add Dan', async () => {
+    it('should not be able to add Dan as a validator because Bob send wrong message', async () => {
       await validator.addValidator(new BN(0), dan).send({ from: alice });
       await validator.addValidator(new BN(0), '0x0000000000000000000000000000000000000001').send({ from: bob });
-      let danResult = await validator.isValidator(dan).call();
+      const danResult = await validator.isValidator(dan).call();
 
       expect(danResult).to.eq(false);
 
       await expectContractCallFailed(
         validator.addValidator(new BN(0), dan).send({ from: bob }),
       );
+    });
 
+    it('should be able to add Dan as a validator', async () => {
       await validator.addValidator(new BN(1), dan).send({ from: alice });
       await validator.addValidator(new BN(1), dan).send({ from: bob });
-      danResult = await validator.isValidator(dan).call();
+      const danResult = await validator.isValidator(dan).call();
 
       expect(danResult).to.eq(true);
     });
 
-    it('Update quorum', async () => {
-      await validator.updateQuorum(new BN(1), new BN(29), new BN(40)).send({ from: alice });
-      await validator.updateQuorum(new BN(1), new BN(19), new BN(40)).send({ from: bob });
-      await validator.updateQuorum(new BN(1), new BN(29), new BN(40)).send({ from: charles });
+    it('should not be able to update quorum because Bob would like other quorum', async () => {
+      await validator.updateQuorum(new BN(2), new BN(29), new BN(40)).send({ from: alice });
+      await validator.updateQuorum(new BN(2), new BN(19), new BN(40)).send({ from: bob });
+      await validator.updateQuorum(new BN(2), new BN(29), new BN(40)).send({ from: charles });
 
-      let num = await validator.num().call();
-      let denom = await validator.denom().call();
+      const num = await validator.num().call();
+      const denom = await validator.denom().call();
 
       expect(num.toString()).to.eq('19');
       expect(denom.toString()).to.eq('30');
 
-      await validator.updateQuorum(new BN(1), new BN(29), new BN(40)).send({ from: dan });
+    });
 
-      num = await validator.num().call();
-      denom = await validator.denom().call();
+    it('should be able to update the quorum successfully', async () => {
+      await validator.updateQuorum(new BN(2), new BN(29), new BN(40)).send({ from: dan });
+
+      const num = await validator.num().call();
+      const denom = await validator.denom().call();
       expect(num.toString()).to.eq('29');
       expect(denom.toString()).to.eq('40');
     });
