@@ -30,7 +30,7 @@ contract Acknowledgement is HasOperators {
     validator = Validator(_validator);
   }
 
-  function getChannel(string memory _name) public view returns (bytes32 _channel) {
+  function getChannelHash(string memory _name) public view returns (bytes32 _channel) {
     _channel = _getHash(_name);
     _validChannel(_channel);
   }
@@ -51,7 +51,7 @@ contract Acknowledgement is HasOperators {
   }
 
   function acknowledge(string memory _channelName, uint256 _id, bytes32 _hash, address _validator) public onlyOperator returns (Status) {
-    bytes32 _channel = getChannel(_channelName);
+    bytes32 _channel = getChannelHash(_channelName);
     require(validatorAck[_channel][_id][_validator] == bytes32(0), "the validator has already acknowledged");
 
     validatorAck[_channel][_id][_validator] = _hash;

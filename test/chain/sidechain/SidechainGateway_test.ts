@@ -1,6 +1,7 @@
 import { ERC20FullContract, ERC721FullMintableContract } from '@axie/contract-library';
 import {
   expectTransactionFailed,
+  expectContractCallFailed,
   resetAfterAll,
   web3Pool,
 } from '@axie/contract-test-utils';
@@ -77,7 +78,7 @@ describe('Sidechain gateway', () => {
 
     acknowledgement = await AcknowledgementContract.deploy(
       alice, // dummy validator
-      ).send(web3Pool);
+    ).send(web3Pool);
 
     validator = await SidechainValidatorContract.deploy(
       acknowledgement.address,
@@ -362,23 +363,37 @@ describe('Sidechain gateway', () => {
 
     it('Add Dan', async () => {
       await validator.addValidator(new BN(0), dan).send({ from: alice });
-      const danResult = await validator.isValidator(dan).call();
+      await validator.addValidator(new BN(0), '0x0000000000000000000000000000000000000001').send({ from: bob });
+      let danResult = await validator.isValidator(dan).call();
 
       expect(danResult).to.eq(false);
 
-      await validator.addValidator(new BN(0), dan).send({ from: bob });
-      const danResultAfter = await validator.isValidator(dan).call();
+      await expectContractCallFailed(
+        validator.addValidator(new BN(0), dan).send({ from: bob }),
+      );
 
-      expect(danResultAfter).to.eq(true);
+      await validator.addValidator(new BN(1), dan).send({ from: alice });
+      await validator.addValidator(new BN(1), dan).send({ from: bob });
+      danResult = await validator.isValidator(dan).call();
+
+      expect(danResult).to.eq(true);
     });
 
     it('Update quorum', async () => {
       await validator.updateQuorum(new BN(1), new BN(29), new BN(40)).send({ from: alice });
-      await validator.updateQuorum(new BN(1), new BN(29), new BN(40)).send({ from: dan });
+      await validator.updateQuorum(new BN(1), new BN(19), new BN(40)).send({ from: bob });
       await validator.updateQuorum(new BN(1), new BN(29), new BN(40)).send({ from: charles });
 
-      const num = await validator.num().call();
-      const denom = await validator.denom().call();
+      let num = await validator.num().call();
+      let denom = await validator.denom().call();
+
+      expect(num.toString()).to.eq('19');
+      expect(denom.toString()).to.eq('30');
+
+      await validator.updateQuorum(new BN(1), new BN(29), new BN(40)).send({ from: dan });
+
+      num = await validator.num().call();
+      denom = await validator.denom().call();
       expect(num.toString()).to.eq('29');
       expect(denom.toString()).to.eq('40');
     });
