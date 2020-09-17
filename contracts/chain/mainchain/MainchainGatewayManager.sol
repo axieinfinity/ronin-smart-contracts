@@ -32,12 +32,10 @@ contract MainchainGatewayManager is MainchainGatewayStorage {
   }
 
   // Should be able to withdraw from WETH
-  function() external payable {}
+  function() external payable {} 
 
   function depositEth() external whenNotPaused payable returns (uint256) {
-    address _weth = registry.getContract(registry.WETH_TOKEN());
-    IWETH(_weth).deposit.value(msg.value)();
-    return _createDepositEntry(msg.sender, _weth, 20, msg.value);
+    return depositEthFor(msg.sender);
   }
 
   function depositERC20(address _token, uint256 _amount) external whenNotPaused returns (uint256) {
@@ -46,6 +44,12 @@ contract MainchainGatewayManager is MainchainGatewayStorage {
 
   function depositERC721(address _token, uint256 _tokenId) external whenNotPaused returns (uint256) {
     return depositERC721For(msg.sender, _token, _tokenId);
+  }
+
+  function depositEthFor(address _owner) public whenNotPaused payable returns (uint256) {
+    address _weth = registry.getContract(registry.WETH_TOKEN());
+    IWETH(_weth).deposit.value(msg.value)();
+    return _createDepositEntry(_owner, _weth, 20, msg.value);
   }
 
   function depositERC20For(address _user, address _token, uint256 _amount) public whenNotPaused returns (uint256) {
