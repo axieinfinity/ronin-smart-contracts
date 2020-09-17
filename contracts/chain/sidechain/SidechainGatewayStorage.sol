@@ -87,13 +87,11 @@ contract SidechainGatewayStorage is ProxyStorage, Pausable {
     _ack = Acknowledgement(registry.getContract(registry.ACKNOWLEDGEMENT()));
   }
 
-  function _getDepositAckChannel() internal view returns (bytes32 _channel) {
-    Acknowledgement _ack = _getAck();
-    _channel = _ack.getChannel(_ack.DEPOSIT_CHANNEL());
+  function _getDepositAckChannel() internal view returns (string memory) {
+    return _getAck().DEPOSIT_CHANNEL();
   }
 
-  function _getWithdrawalAckChannel() internal view returns (bytes32 _channel) {
-    Acknowledgement _ack = _getAck();
-    _channel = _ack.getChannel(_ack.WITHDRAWAL_CHANNEL());
+  function _getWithdrawalAckChannel() internal view returns (string memory) {
+    return _getAck().WITHDRAWAL_CHANNEL();
   }
 }

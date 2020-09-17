@@ -55,7 +55,7 @@ contract SidechainValidator is Validator {
     }
   }
 
-  function _getAckChannel() internal view returns (bytes32) {
-    return acknowledgement.getChannel(acknowledgement.VALIDATOR_CHANNEL());
+  function _getAckChannel() internal view returns (string memory) {
+    return acknowledgement.VALIDATOR_CHANNEL();
   }
 }
