@@ -157,11 +157,11 @@ contract SidechainGatewayManager is SidechainGatewayStorage {
     return withdrawalSigners[_withdrawalId];
   }
 
-  function getWithdrawalSignatures(uint256 _withdrawalId) public view returns (bytes[] memory results) {
-    address[] memory _signers = getWithdrawalSigners(_withdrawalId);
-    results = new bytes[](_signers.length);
+  function getWithdrawalSignatures(uint256 _withdrawalId) public view returns (address[] memory _signers, bytes[] memory _sigs) {
+    _signers = getWithdrawalSigners(_withdrawalId);
+    _sigs = new bytes[](_signers.length);
     for (uint256 _i = 0; _i < _signers.length; _i++) {
-      results[_i] = withdrawalSig[_withdrawalId][_signers[_i]];
+      _sigs[_i] = withdrawalSig[_withdrawalId][_signers[_i]];
     }
   }
 
