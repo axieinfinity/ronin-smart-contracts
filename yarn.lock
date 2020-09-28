@@ -34,6 +34,7 @@
   resolved "https://registry.yarnpkg.com/@0x/assert/-/assert-1.0.23.tgz#2f663efae9b0ba2a00f2d5821b7a767f87058d3d"
   integrity sha512-0Y4R97o+GgCydQUMXbDpHyI0S5ix2Vm0eeNQTD2SSqPIXhJf4eykXCnfDLz9R8wODz51ry9oi3cOMQ2ShONN7Q==
   dependencies:
+    handlebars "=3.0.11"
     "@0x/json-schemas" "^2.1.7"
     "@0x/typescript-typings" "^3.0.8"
     "@0x/utils" "^3.0.1"
@@ -45,6 +46,7 @@
   resolved "https://registry.yarnpkg.com/@0x/json-schemas/-/json-schemas-2.1.7.tgz#19e34f6c9cb3b0f112d1e4722c3951fa6d147b44"
   integrity sha512-DCuoBtJTMOF0wzwvfqj+aAsWPmIgwsKEN+d/jVc5Nb8vVaKh9gRRxI+Fkcl5D2EofXSmNzg1NrtDWdCb2VDRcg==
   dependencies:
+    handlebars "=2.0.11"
     "@0x/typescript-typings" "^3.0.8"
     "@types/node" "*"
     jsonschema "^1.2.0"
