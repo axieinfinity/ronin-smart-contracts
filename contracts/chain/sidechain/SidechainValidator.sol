@@ -1,6 +1,5 @@
 pragma solidity ^0.5.2;
 
-import "@axie/contract-library/contracts/access/HasAdmin.sol";
 import "../common/Validator.sol";
 import "./Acknowledgement.sol";
 
