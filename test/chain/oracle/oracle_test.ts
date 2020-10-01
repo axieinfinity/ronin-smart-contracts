@@ -7,14 +7,13 @@ import 'mocha';
 import web3Utils = require('web3-utils');
 import { web3Pool as roninWeb3 } from '../../../src/web3';
 
-import { AcknowledgementContract, MainchainValidatorContract } from '../../../src';
+import { AcknowledgementContract, MainchainValidatorContract, RoninWETHContract, WETHContract } from '../../../src';
 import { MainchainGatewayManagerContract } from '../../../src/contract/mainchain_gateway_manager';
 import { MainchainGatewayProxyContract } from '../../../src/contract/mainchain_gateway_proxy';
 import { RegistryContract } from '../../../src/contract/registry';
 import { SidechainGatewayManagerContract } from '../../../src/contract/sidechain_gateway_manager';
 import { SidechainGatewayProxyContract } from '../../../src/contract/sidechain_gateway_proxy';
 import { SidechainValidatorContract } from '../../../src/contract/sidechain_validator';
-import { WETHDevContract } from '../../../src/contract/w_e_t_h_dev';
 
 const SIDECHAIN_VALIDATOR = '0x0000000000000000000000000000000000000011';
 const SIDECHAIN_ACKNOWLEDGEMENT = '0x0000000000000000000000000000000000000022';
@@ -48,8 +47,8 @@ describe('test oracle', () => {
   let sidechainValidator: SidechainValidatorContract;
   let mainchainValidator: MainchainValidatorContract;
 
-  let sidechainWeth: WETHDevContract;
-  let mainchainWeth: WETHDevContract;
+  let sidechainWeth: RoninWETHContract;
+  let mainchainWeth: WETHContract;
 
   let acknowledgement: AcknowledgementContract;
 
@@ -58,7 +57,7 @@ describe('test oracle', () => {
     [alice, bob] = await web3Pool.ethGetAccounts();
 
     mainchainRegistry = await RegistryContract.deploy().send(web3Pool);
-    mainchainWeth = await WETHDevContract.deploy().send(web3Pool);
+    mainchainWeth = await WETHContract.deploy().send(web3Pool);
     mainchainGateway = await MainchainGatewayManagerContract.deploy().send(web3Pool);
 
     mainchainValidator = await MainchainValidatorContract
@@ -88,7 +87,7 @@ describe('test oracle', () => {
     sidechainValidator = new SidechainValidatorContract(SIDECHAIN_VALIDATOR, roninWeb3);
 
     sidechainRegistry = await RegistryContract.deploy().send(roninWeb3);
-    sidechainWeth = await WETHDevContract.deploy().send(roninWeb3);
+    sidechainWeth = await RoninWETHContract.deploy().send(roninWeb3);
 
     sidechainGateway = await SidechainGatewayManagerContract.deploy().send(roninWeb3);
     sidechainGatewayProxy = await SidechainGatewayProxyContract

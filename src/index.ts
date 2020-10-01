@@ -8,4 +8,5 @@ export * from './contract/sidechain_gateway_storage';
 export * from './contract/acknowledgement';
 export * from './contract/registry';
 export * from './contract/validator';
-export * from './contract/w_e_t_h_dev';
+export * from './contract/weth';
+export * from './contract/ronin_w_e_t_h';

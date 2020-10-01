@@ -7,7 +7,7 @@ import "@axie/contract-library/contracts/token/erc20/IERC20Mintable.sol";
 import "@axie/contract-library/contracts/token/erc721/IERC721.sol";
 import "@axie/contract-library/contracts/token/erc721/IERC721Mintable.sol";
 import "@axie/contract-library/contracts/util/AddressUtils.sol";
-import "../common/IWETH.sol";
+import "./WETH.sol";
 import "./MainchainGatewayStorage.sol";
 
 
@@ -48,7 +48,7 @@ contract MainchainGatewayManager is MainchainGatewayStorage {
 
   function depositEthFor(address _owner) public whenNotPaused payable returns (uint256) {
     address _weth = registry.getContract(registry.WETH_TOKEN());
-    IWETH(_weth).deposit.value(msg.value)();
+    WETH(_weth).deposit.value(msg.value)();
     return _createDepositEntry(_owner, _weth, 20, msg.value);
   }
 
@@ -313,7 +313,7 @@ contract MainchainGatewayManager is MainchainGatewayStorage {
   ) internal
   {
     address _weth = registry.getContract(registry.WETH_TOKEN());
-    IWETH(_weth).withdraw(_amount);
+    WETH(_weth).withdraw(_amount);
     _user.toPayable().transfer(_amount);
   }
 
