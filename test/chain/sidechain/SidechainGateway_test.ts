@@ -11,12 +11,11 @@ import * as _ from 'lodash';
 import 'mocha';
 import web3Utils = require('web3-utils');
 
-import { AcknowledgementContract, ValidatorContract } from '../../../src';
+import { AcknowledgementContract, RoninWETHContract } from '../../../src';
 import { RegistryContract } from '../../../src/contract/registry';
 import { SidechainGatewayManagerContract } from '../../../src/contract/sidechain_gateway_manager';
 import { SidechainGatewayProxyContract } from '../../../src/contract/sidechain_gateway_proxy';
 import { SidechainValidatorContract } from '../../../src/contract/sidechain_validator';
-import { WETHDevContract } from '../../../src/contract/w_e_t_h_dev';
 
 const ethToWei = (eth: number) => new BN(web3Utils.toWei(eth.toString(), 'ether'));
 
@@ -66,13 +65,13 @@ describe('Sidechain gateway', () => {
   let validator: SidechainValidatorContract;
   let acknowledgement: AcknowledgementContract;
   let sidechainGatewayProxy: SidechainGatewayProxyContract;
-  let weth: WETHDevContract;
+  let weth: RoninWETHContract;
   let erc721: ERC721FullMintableContract;
 
   before(async () => {
     [alice, bob, charles, dan] = await web3Pool.ethGetAccounts();
     sidechainGateway = await SidechainGatewayManagerContract.deploy().send(web3Pool);
-    weth = await WETHDevContract.deploy().send(web3Pool);
+    weth = await RoninWETHContract.deploy().send(web3Pool);
     erc721 = await ERC721FullMintableContract.deploy('ERC721', '721', '').send(web3Pool);
     registry = await RegistryContract.deploy().send(web3Pool);
 

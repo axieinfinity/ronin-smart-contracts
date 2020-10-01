@@ -8,7 +8,6 @@ import "@axie/contract-library/contracts/token/erc20/IERC20Mintable.sol";
 import "@axie/contract-library/contracts/token/erc721/IERC721.sol";
 import "@axie/contract-library/contracts/token/erc721/IERC721Mintable.sol";
 import "@axie/contract-library/contracts/util/AddressUtils.sol";
-import "../common/IWETH.sol";
 import "./SidechainGatewayStorage.sol";
 
 

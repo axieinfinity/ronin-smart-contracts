@@ -14,7 +14,7 @@ import { MainchainGatewayManagerContract } from '../../../src/contract/mainchain
 import { MainchainGatewayProxyContract } from '../../../src/contract/mainchain_gateway_proxy';
 import { MainchainValidatorContract } from '../../../src/contract/mainchain_validator';
 import { RegistryContract } from '../../../src/contract/registry';
-import { WETHDevContract } from '../../../src/contract/w_e_t_h_dev';
+import { WETHContract } from '../../../src/contract/weth';
 
 const ethToWei = (eth: number) => new BN(web3Utils.toWei(eth.toString(), 'ether'));
 
@@ -62,14 +62,14 @@ describe('Mainchain gateway', () => {
   let registry: RegistryContract;
   let validator: MainchainValidatorContract;
   let mainchainGatewayProxy: MainchainGatewayProxyContract;
-  let weth: WETHDevContract;
+  let weth: WETHContract;
   let erc20: ERC20FullContract;
   let erc721: ERC721FullMintableContract;
 
   before(async () => {
     [alice, bob, charles] = await web3Pool.ethGetAccounts();
     mainchainGateway = await MainchainGatewayManagerContract.deploy().send(web3Pool);
-    weth = await WETHDevContract.deploy().send(web3Pool);
+    weth = await WETHContract.deploy().send(web3Pool);
     registry = await RegistryContract.deploy().send(web3Pool);
 
     const validatorContract = await registry.VALIDATOR().call();
