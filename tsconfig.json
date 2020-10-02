@@ -12,7 +12,11 @@
       "./node_modules/@types/"
     ],
     "outDir": "dist",
-    "rootDir": "."
+    "rootDir": ".",
+    "composite": true,
+    "declaration": true,
+    "declarationMap": true,
+    "sourceMap": true
     },
   "include": [
     "src/**/*",
