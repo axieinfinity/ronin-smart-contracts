@@ -338,7 +338,7 @@ describe('Sidechain gateway', () => {
       expect(signers[0].toLowerCase()).eq(alice.toLowerCase());
       expect(signers[1].toLowerCase()).eq(bob.toLowerCase());
 
-      const allSig = await sidechainGateway.getWithdrawalSignatures(new BN(0)).call();
+      const [, allSig] = await sidechainGateway.getWithdrawalSignatures(new BN(0)).call();
       expect(allSig[0]).eq(sig1);
       expect(allSig[1]).eq(sig2);
     });
