@@ -1,5 +1,5 @@
 {
-  "name": "@axie/gateway-smart-contracts",
+  "name": "@axie/ronin-smart-contracts",
   "version": "1.0.0",
   "description": "Axie Infinity gateway smart contracts.",
   "author": "Axie Infinity Engineering <engineering@axieinfinity.com>",

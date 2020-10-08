@@ -1,1 +1,1 @@
-# gateway-smart-contracts
+# ronin-smart-contracts
