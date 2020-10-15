@@ -10,3 +10,8 @@ export * from './contract/registry';
 export * from './contract/validator';
 export * from './contract/weth';
 export * from './contract/ronin_w_e_t_h';
+export * from './contract/exchange';
+export * from './contract/offer_auction';
+export * from './contract/clock_auction';
+export * from './contract/land';
+export * from './contract/item_collection';
