@@ -357,54 +357,54 @@ describe('Exchange test', () => {
     });
   });
 
-  // describe('Offer Auction test', async () => {
-  //   it('Should not be create offer with un-allowed tokens', async () => {
-  //     await expectTransactionFailed(
-  //       offerAuction.createOffer1(new BN(0), alice, new BN(1000)).send({ from: charles }),
-  //     );
-  //   });
+  describe('Offer Auction test', async () => {
+    it('Should not be create offer with un-allowed tokens', async () => {
+      await expectTransactionFailed(
+        offerAuction.createOffer1(new BN(0), alice, new BN(1000)).send({ from: charles }),
+      );
+    });
 
-  //   it('Should be able to create offer with exchangeable tokens and price not more than balance', async () => {
-  //     await expectTransactionFailed(
-  //       offerAuction.createOffer1(new BN(0), roninWETH.address, ethToWei(101)).send({ from: charles }),
-  //     );
+    it('Should be able to create offer with exchangeable tokens and price not more than balance', async () => {
+      await expectTransactionFailed(
+        offerAuction.createOffer1(new BN(0), roninWETH.address, ethToWei(101)).send({ from: charles }),
+      );
 
-  //     await offerAuction.createOffer1(new BN(0), roninWETH.address, new BN(1000)).send({ from: charles });
-  //     await offerAuction.createOffer1(new BN(0), exchangeToken.address, new BN(1000)).send({ from: charles });
-  //   });
+      await offerAuction.createOffer1(new BN(0), roninWETH.address, new BN(1000)).send({ from: charles });
+      await offerAuction.createOffer1(new BN(0), exchangeToken.address, new BN(1000)).send({ from: charles });
+    });
 
-  //   it('Should not be able to accept offer with other token', async () => {
-  //     await expectTransactionFailed(
-  //       offerAuction.acceptOffer(
-  //         charles,
-  //         new BN(0),
-  //         firstErc20.address,
-  //         new BN(1000),
-  //       ).send({ from: bob }),
-  //     );
-  //   });
+    it('Should not be able to accept offer with other token', async () => {
+      await expectTransactionFailed(
+        offerAuction.acceptOffer(
+          charles,
+          new BN(0),
+          firstErc20.address,
+          new BN(1000),
+        ).send({ from: bob }),
+      );
+    });
 
-  //   it('Should able to cancel offer & reject', async () => {
-  //     await offerAuction.cancelOffer(exchangeToken.address, new BN(0)).send({ from: charles });
-  //     await offerAuction.rejectOffer(charles, roninWETH.address, new BN(0)).send({ from: bob });
-  //   });
+    it('Should able to cancel offer & reject', async () => {
+      await offerAuction.cancelOffer(exchangeToken.address, new BN(0)).send({ from: charles });
+      await offerAuction.rejectOffer(charles, roninWETH.address, new BN(0)).send({ from: bob });
+    });
 
-  //   it('Should able to accept offer', async () => {
-  //     await offerAuction.createOffer1(new BN(0), roninWETH.address, ethToWei(1)).send({ from: charles });
+    it('Should able to accept offer', async () => {
+      await offerAuction.createOffer1(new BN(0), roninWETH.address, ethToWei(1)).send({ from: charles });
 
-  //     const prevBalance = await roninWETH.balanceOf(charles).call();
+      const prevBalance = await roninWETH.balanceOf(charles).call();
 
-  //     await offerAuction.acceptOffer(
-  //       charles,
-  //       new BN(0),
-  //       roninWETH.address,
-  //       ethToWei(1),
-  //     ).send({ from: bob });
+      await offerAuction.acceptOffer(
+        charles,
+        new BN(0),
+        roninWETH.address,
+        ethToWei(1),
+      ).send({ from: bob });
 
-  //     const balance = await roninWETH.balanceOf(charles).call();
-  //     expect(balance.toString()).to.not.eq(prevBalance.toString());
-  //   });
-  // });
+      const balance = await roninWETH.balanceOf(charles).call();
+      expect(balance.toString()).to.not.eq(prevBalance.toString());
+    });
+  });
 
   describe('Bundle test', async () => {
     it(`Should not create bundle with an item appeared more than ${tokenMaxOccurrences} times`, async () => {
