@@ -7,12 +7,12 @@ import "./IValidator.sol";
 contract Validator is IValidator {
   using SafeMath for uint256;
 
+  mapping(address => bool) validatorMap;
   address[] public validators;
   uint256 public validatorCount;
+
   uint256 public num;
   uint256 public denom;
-
-  mapping(address => bool) validatorMap;
 
   constructor(address[] memory _validators, uint256 _num, uint256 _denom)
     public
