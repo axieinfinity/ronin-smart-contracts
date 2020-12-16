@@ -1,4 +1,4 @@
-pragma solidity ^0.5.2;
+pragma solidity ^0.5.17;
 
 import "@axie/contract-library/contracts/proxy/ProxyStorage.sol";
 import "@axie/contract-library/contracts/lifecycle/Pausable.sol";
@@ -14,19 +14,19 @@ import "../common/Registry.sol";
 contract MainchainGatewayStorage is ProxyStorage, Pausable {
 
   event TokenDeposited(
-    uint256 indexed depositId,
-    address indexed owner,
-    address indexed tokenAddress,
-    address sidechainAddress,
-    uint32  standard,
-    uint256 tokenNumber // ERC-20 amount or ERC721 tokenId
+    uint256 indexed _depositId,
+    address indexed _owner,
+    address indexed _tokenAddress,
+    address _sidechainAddress,
+    uint32  _standard,
+    uint256 _tokenNumber // ERC-20 amount or ERC721 tokenId
   );
 
   event TokenWithdrew(
-    uint256 indexed withdrawId,
-    address indexed owner,
-    address indexed tokenAddress,
-    uint256 tokenNumber
+    uint256 indexed _withdrawId,
+    address indexed _owner,
+    address indexed _tokenAddress,
+    uint256 _tokenNumber
   );
 
   struct DepositEntry {

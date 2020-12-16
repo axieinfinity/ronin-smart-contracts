@@ -1,4 +1,4 @@
-pragma solidity ^0.5.2;
+pragma solidity ^0.5.17;
 
 import "@axie/contract-library/contracts/proxy/ProxyStorage.sol";
 import "@axie/contract-library/contracts/lifecycle/Pausable.sol";
@@ -21,21 +21,21 @@ contract SidechainGatewayStorage is ProxyStorage, Pausable {
   );
 
   event TokenWithdrew(
-    uint256 indexed withdrawId,
-    address indexed owner,
-    address indexed tokenAddress,
-    address mainchainAddress,
-    uint32  standard,
-    uint256 tokenNumber
+    uint256 indexed _withdrawId,
+    address indexed _owner,
+    address indexed _tokenAddress,
+    address _mainchainAddress,
+    uint32  _standard,
+    uint256 _tokenNumber
   );
 
   event RequestTokenWithdrawalSigAgain(
-    uint256 indexed withdrawalId,
-    address indexed owner,
-    address indexed tokenAddress,
-    address mainchainAddress,
-    uint32  standard,
-    uint256 tokenNumber
+    uint256 indexed _withdrawalId,
+    address indexed _owner,
+    address indexed _tokenAddress,
+    address _mainchainAddress,
+    uint32  _standard,
+    uint256 _tokenNumber
   );
 
   struct DepositEntry {
@@ -71,27 +71,49 @@ contract SidechainGatewayStorage is ProxyStorage, Pausable {
   mapping(address => uint256[]) pendingWithdrawals;
   uint256 public maxPendingWithdrawal;
 
-  function updateRegistry(address _registry) external onlyAdmin {
+  function updateRegistry(address _registry)
+    external
+    onlyAdmin
+  {
     registry = Registry(_registry);
   }
 
-  function updateMaxPendingWithdrawal(uint256 _maxPendingWithdrawal) public onlyAdmin {
+  function updateMaxPendingWithdrawal(uint256 _maxPendingWithdrawal)
+    public
+    onlyAdmin
+  {
     maxPendingWithdrawal = _maxPendingWithdrawal;
   }
 
-  function _getValidator() internal view returns (Validator _validator) {
-    _validator = Validator(registry.getContract(registry.VALIDATOR()));
+  function _getValidator()
+    internal
+    view
+    returns (Validator)
+  {
+    return Validator(registry.getContract(registry.VALIDATOR()));
   }
 
-  function _getAck() internal view returns (Acknowledgement _ack) {
-    _ack = Acknowledgement(registry.getContract(registry.ACKNOWLEDGEMENT()));
+  function _getAcknowledgementContract()
+    internal
+    view
+    returns (Acknowledgement)
+  {
+    return Acknowledgement(registry.getContract(registry.ACKNOWLEDGEMENT()));
   }
 
-  function _getDepositAckChannel() internal view returns (string memory) {
-    return _getAck().DEPOSIT_CHANNEL();
+  function _getDepositAckChannel()
+    internal
+    view
+    returns (string memory)
+  {
+    return _getAcknowledgementContract().DEPOSIT_CHANNEL();
   }
 
-  function _getWithdrawalAckChannel() internal view returns (string memory) {
-    return _getAck().WITHDRAWAL_CHANNEL();
+  function _getWithdrawalAckChannel()
+    internal
+    view
+    returns (string memory)
+  {
+    return _getAcknowledgementContract().WITHDRAWAL_CHANNEL();
   }
 }

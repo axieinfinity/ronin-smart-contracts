@@ -1,4 +1,4 @@
-pragma solidity ^0.5.2;
+pragma solidity ^0.5.17;
 pragma experimental ABIEncoderV2;
 
 import "@axie/contract-library/contracts/cryptography/ECVerify.sol";
@@ -21,7 +21,10 @@ contract SidechainGatewayManager is SidechainGatewayStorage {
   using ECVerify for bytes32;
 
   modifier onlyMappedToken(address _token, uint32 _standard) {
-    require(registry.isTokenMapped(_token, _standard, false), "Token is not mapped");
+    require(
+      registry.isTokenMapped(_token, _standard, false),
+      "SidechainGatewayManager: Token is not mapped"
+    );
     _;
   }
 
@@ -30,7 +33,10 @@ contract SidechainGatewayManager is SidechainGatewayStorage {
     _;
   }
 
-  function() external payable {}
+  function()
+    external
+    payable
+  {}
 
   function depositERCTokenFor(
     uint256 _depositId,
@@ -38,14 +44,23 @@ contract SidechainGatewayManager is SidechainGatewayStorage {
     address _token,
     uint32 _standard,
     uint256 _tokenNumber
-  ) external whenNotPaused onlyValidator
+  )
+    external
+    whenNotPaused
+    onlyValidator
   {
     (,, uint32 _tokenStandard) = registry.getMappedToken(_token, false);
     require(_tokenStandard == _standard);
 
     bytes32 _hash = keccak256(abi.encode(_owner, _token, _standard, _tokenNumber));
 
-    Acknowledgement.Status _status = _getAck().acknowledge(_getDepositAckChannel(), _depositId, _hash, msg.sender);
+    Acknowledgement.Status _status = _getAcknowledgementContract().acknowledge(
+      _getDepositAckChannel(),
+      _depositId,
+      _hash,
+      msg.sender
+    );
+
     if (_status == Acknowledgement.Status.FirstApproved) {
       if (_standard == 20) {
         _depositERC20For(_owner, _token, _tokenNumber);
@@ -63,30 +78,61 @@ contract SidechainGatewayManager is SidechainGatewayStorage {
     }
   }
 
-  function withdrawETH(uint256 _amount) external whenNotPaused returns (uint256) {
+  function withdrawETH(uint256 _amount)
+    external
+    whenNotPaused
+    returns (uint256)
+  {
     address _weth = registry.getContract(registry.WETH_TOKEN());
     return withdrawERC20For(msg.sender, _weth, _amount);
   }
 
-  function withdrawERC20(address _token, uint256 _amount) external whenNotPaused returns (uint256) {
+  function withdrawERC20(address _token, uint256 _amount)
+    external
+    whenNotPaused
+    returns (uint256)
+  {
     return withdrawERC20For(msg.sender, _token, _amount);
   }
 
-  function withdrawERC20For(address _owner, address _token, uint256 _amount) public whenNotPaused returns (uint256) {
-    require(IERC20(_token).transferFrom(msg.sender, address(this), _amount), "ERC-20 token transfer failed");
+  function withdrawERC20For(address _owner, address _token, uint256 _amount)
+    public
+    whenNotPaused
+    returns (uint256)
+  {
+    require(
+      IERC20(_token).transferFrom(msg.sender, address(this), _amount),
+      "SidechainGatewayManager: ERC20 token transfer failed"
+    );
     return _createWithdrawalEntry(_owner, _token, 20, _amount);
   }
 
-  function withdrawERC721(address _token, uint256 _tokenId) public whenNotPaused returns (uint256) {
+  function withdrawERC721(address _token, uint256 _tokenId)
+    public
+    whenNotPaused
+    returns (uint256)
+  {
     return withdrawalERC721For(msg.sender, _token, _tokenId);
   }
 
-  function withdrawalERC721For(address _owner, address _token, uint256 _tokenId) public whenNotPaused returns (uint256) {
+  function withdrawalERC721For(address _owner, address _token, uint256 _tokenId)
+    public
+    whenNotPaused
+    returns (uint256)
+  {
     IERC721(_token).transferFrom(msg.sender, address(this), _tokenId);
     return _createWithdrawalEntry(_owner, _token, 721, _tokenId);
   }
 
-  function submitWithdrawalSignatures(uint256 _withdrawalId, bool _shouldReplace, bytes memory _sig) public whenNotPaused onlyValidator {
+  function submitWithdrawalSignatures(
+    uint256 _withdrawalId,
+    bool _shouldReplace,
+    bytes memory _sig
+  )
+    public
+    whenNotPaused
+    onlyValidator
+  {
     bytes memory _currentSig = withdrawalSig[_withdrawalId][msg.sender];
 
     bool _alreadyHasSig = _currentSig.length != 0;
@@ -105,7 +151,10 @@ contract SidechainGatewayManager is SidechainGatewayStorage {
     * Request signature again, in case the withdrawer didn't submit to mainchain in time and the set of the validator
     * has changed. Later on this should require some penaties, e.g some money.
    */
-  function requestSignatureAgain(uint256 _withdrawalId) public whenNotPaused {
+  function requestSignatureAgain(uint256 _withdrawalId)
+    public
+    whenNotPaused
+  {
     WithdrawalEntry memory _entry = withdrawals[_withdrawalId];
 
     require(_entry.owner == msg.sender);
@@ -122,7 +171,10 @@ contract SidechainGatewayManager is SidechainGatewayStorage {
 
   function getPendingWithdrawals(
     address _owner
-  ) public view returns (uint256[] memory ids, WithdrawalEntry[] memory entries)
+  )
+    public
+    view
+    returns (uint256[] memory ids, WithdrawalEntry[] memory entries)
   {
     ids = pendingWithdrawals[_owner];
     entries = new WithdrawalEntry[](ids.length);
@@ -133,9 +185,18 @@ contract SidechainGatewayManager is SidechainGatewayStorage {
     }
   }
 
-  function acknowledWithdrawalOnMainchain(uint256 _withdrawalId) public whenNotPaused onlyValidator {
+  function acknowledWithdrawalOnMainchain(uint256 _withdrawalId)
+    public
+    whenNotPaused
+    onlyValidator
+  {
     bytes32 _hash = keccak256(abi.encode(_withdrawalId));
-    Acknowledgement.Status _status = _getAck().acknowledge(_getWithdrawalAckChannel(), _withdrawalId, _hash, msg.sender);
+    Acknowledgement.Status _status = _getAcknowledgementContract().acknowledge(
+      _getWithdrawalAckChannel(),
+      _withdrawalId,
+      _hash,
+      msg.sender
+    );
 
     if (_status == Acknowledgement.Status.FirstApproved) {
       // Remove out of the pending withdrawals
@@ -152,11 +213,19 @@ contract SidechainGatewayManager is SidechainGatewayStorage {
     }
   }
 
-  function getWithdrawalSigners(uint256 _withdrawalId) public view returns (address[] memory) {
+  function getWithdrawalSigners(uint256 _withdrawalId)
+    public
+    view
+    returns (address[] memory)
+  {
     return withdrawalSigners[_withdrawalId];
   }
 
-  function getWithdrawalSignatures(uint256 _withdrawalId) public view returns (address[] memory _signers, bytes[] memory _sigs) {
+  function getWithdrawalSignatures(uint256 _withdrawalId)
+    public
+    view
+    returns (address[] memory _signers, bytes[] memory _sigs)
+  {
     _signers = getWithdrawalSigners(_withdrawalId);
     _sigs = new bytes[](_signers.length);
     for (uint256 _i = 0; _i < _signers.length; _i++) {
@@ -164,23 +233,41 @@ contract SidechainGatewayManager is SidechainGatewayStorage {
     }
   }
 
-  function _depositERC20For(address _owner, address _token, uint256 _amount) internal {
+  function _depositERC20For(address _owner, address _token, uint256 _amount)
+    internal
+  {
     uint256 _gatewayBalance = IERC20(_token).balanceOf(address(this));
     if (_gatewayBalance < _amount) {
-      require(IERC20Mintable(_token).mint(address(this), _amount.sub(_gatewayBalance)), "Minting ERC20 to gateway failed");
+      require(
+        IERC20Mintable(_token).mint(address(this), _amount.sub(_gatewayBalance)),
+        "SidechainGatewayManager: Minting ERC20 to gateway failed"
+      );
     }
 
-    require(IERC20(_token).transfer(_owner, _amount), "Transfer failed");
+    require(
+      IERC20(_token).transfer(_owner, _amount),
+      "SidechainGatewayManager: Transfer ERC20 token failed"
+    );
   }
 
-  function _depositERC721For(address _owner, address _token, uint256 _tokenId) internal {
+  function _depositERC721For(address _owner, address _token, uint256 _tokenId)
+    internal
+  {
     if (!_tryERC721TransferFrom(_token, address(this), _owner, _tokenId)) {
-      require(IERC721Mintable(_token).mint(_owner, _tokenId), "Minting ERC721 token to gateway failed");
+      require(
+        IERC721Mintable(_token).mint(_owner, _tokenId),
+        "SidechainGatewayManager: Minting ERC721 token to gateway failed"
+      );
     }
   }
 
-  function _alreadyReleased(uint256 _depositId) internal view returns (bool) {
-    return deposits[_depositId].owner != address(0) || deposits[_depositId].tokenAddress != address(0);
+  function _alreadyReleased(uint256 _depositId)
+    internal
+    view
+    returns (bool)
+  {
+    return deposits[_depositId].owner != address(0) ||
+      deposits[_depositId].tokenAddress != address(0);
   }
 
   function _createWithdrawalEntry(
@@ -189,9 +276,9 @@ contract SidechainGatewayManager is SidechainGatewayStorage {
     uint32 _standard,
     uint256 _number
   )
-  internal onlyMappedToken(_token, _standard)
-  returns
-  (uint256 _withdrawalId)
+    internal
+    onlyMappedToken(_token, _standard)
+    returns (uint256 _withdrawalId)
   {
     (address _mainchainToken,,) = registry.getMappedToken(_token, false);
 
@@ -220,9 +307,19 @@ contract SidechainGatewayManager is SidechainGatewayStorage {
   }
 
   // See more here https://blog.polymath.network/try-catch-in-solidity-handling-the-revert-exception-f53718f76047
-  function _tryERC721TransferFrom(address _token, address _from, address _to, uint256 _tokenId) internal returns (bool) {
+  function _tryERC721TransferFrom(
+    address _token,
+    address _from,
+    address _to,
+    uint256 _tokenId
+  )
+    internal
+    returns (bool)
+  {
     (bool success,) = _token.call(
-      abi.encodeWithSelector(IERC721(_token).transferFrom.selector, _from, _to, _tokenId)
+      abi.encodeWithSelector(
+        IERC721(_token).transferFrom.selector, _from, _to, _tokenId
+      )
     );
     return success;
   }

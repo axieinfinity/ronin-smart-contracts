@@ -1,19 +1,20 @@
-pragma solidity ^0.5.2;
+pragma solidity ^0.5.17;
 
 import "@axie/contract-library/contracts/access/HasAdmin.sol";
 
 
 contract Registry is HasAdmin {
+
   event ContractAddressUpdated(
-    string indexed name,
-    bytes32 indexed code,
-    address newAddress
+    string indexed _name,
+    bytes32 indexed _code,
+    address indexed _newAddress
   );
 
   event TokenMapped(
-    address indexed mainchainToken,
-    address indexed sidechainToken,
-    uint32 standard
+    address indexed _mainchainToken,
+    address indexed _sidechainToken,
+    uint32 _standard
   );
 
   string public constant GATEWAY = "GATEWAY";
@@ -31,27 +32,42 @@ contract Registry is HasAdmin {
   mapping(address => TokenMapping) public mainchainMap;
   mapping(address => TokenMapping) public sidechainMap;
 
-  function getContract(string calldata _name) external view returns (address _address) {
+  function getContract(string calldata _name)
+    external
+    view
+    returns (address _address)
+  {
     bytes32 _code = getCode(_name);
     _address = contractAddresses[_code];
     require(_address != address(0));
   }
 
-  function isTokenMapped(address _token, uint32 _standard, bool _isMainchain) external view returns (bool) {
+  function isTokenMapped(address _token, uint32 _standard, bool _isMainchain)
+    external
+    view
+    returns (bool)
+  {
     TokenMapping memory _mapping = _getTokenMapping(_token, _isMainchain);
 
-    return _mapping.mainchainToken != address(0) && _mapping.sidechainToken != address(0) &&
-    _mapping.standard == _standard;
+    return _mapping.mainchainToken != address(0) &&
+      _mapping.sidechainToken != address(0) &&
+      _mapping.standard == _standard;
   }
 
-  function updateContract(string calldata _name, address _newAddress) external onlyAdmin {
+  function updateContract(string calldata _name, address _newAddress)
+    external
+    onlyAdmin
+  {
     bytes32 _code = getCode(_name);
     contractAddresses[_code] = _newAddress;
 
     emit ContractAddressUpdated(_name, _code, _newAddress);
   }
 
-  function mapToken(address _mainchainToken, address _sidechainToken, uint32 _standard) external onlyAdmin {
+  function mapToken(address _mainchainToken, address _sidechainToken, uint32 _standard)
+    external
+    onlyAdmin
+  {
     TokenMapping memory _map = TokenMapping(
       _mainchainToken,
       _sidechainToken,
@@ -68,7 +84,10 @@ contract Registry is HasAdmin {
     );
   }
 
-  function clearMapToken(address _mainchainToken, address _sidechainToken) external onlyAdmin {
+  function clearMapToken(address _mainchainToken, address _sidechainToken)
+    external
+    onlyAdmin
+  {
     TokenMapping storage _mainchainMap = mainchainMap[_mainchainToken];
     _clearMapEntry(_mainchainMap);
 
@@ -79,7 +98,9 @@ contract Registry is HasAdmin {
   function getMappedToken(
     address _token,
     bool _isMainchain
-  ) external view
+  )
+    external
+    view
   returns (
     address _mainchainToken,
     address _sidechainToken,
@@ -92,14 +113,21 @@ contract Registry is HasAdmin {
     _standard = _mapping.standard;
   }
 
-  function getCode(string memory _name) public pure returns (bytes32) {
+  function getCode(string memory _name)
+    public
+    pure
+    returns (bytes32)
+  {
     return keccak256(abi.encodePacked(_name));
   }
 
   function _getTokenMapping(
     address _token,
     bool isMainchain
-  ) internal view returns (TokenMapping memory _mapping)
+  )
+    internal
+    view
+    returns (TokenMapping memory _mapping)
   {
     if (isMainchain) {
       _mapping = mainchainMap[_token];
@@ -108,7 +136,9 @@ contract Registry is HasAdmin {
     }
   }
 
-  function _clearMapEntry(TokenMapping storage _entry) internal {
+  function _clearMapEntry(TokenMapping storage _entry)
+    internal
+  {
     _entry.mainchainToken = address(0);
     _entry.sidechainToken = address(0);
     _entry.standard = 0;
