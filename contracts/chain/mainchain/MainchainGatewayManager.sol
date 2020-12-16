@@ -1,4 +1,4 @@
-pragma solidity ^0.5.2;
+pragma solidity ^0.5.17;
 
 import "@axie/contract-library/contracts/cryptography/ECVerify.sol";
 import "@axie/contract-library/contracts/math/SafeMath.sol";
@@ -21,7 +21,10 @@ contract MainchainGatewayManager is MainchainGatewayStorage {
   using ECVerify for bytes32;
 
   modifier onlyMappedToken(address _token, uint32 _standard) {
-    require(registry.isTokenMapped(_token, _standard, true), "Token is not mapped");
+    require(
+      registry.isTokenMapped(_token, _standard, true),
+      "MainchainGatewayManager: Token is not mapped"
+    );
     _;
   }
 
@@ -32,37 +35,76 @@ contract MainchainGatewayManager is MainchainGatewayStorage {
   }
 
   // Should be able to withdraw from WETH
-  function() external payable {}
+  function()
+    external
+    payable
+  {}
 
-  function depositEth() external whenNotPaused payable returns (uint256) {
+  function depositEth()
+    external
+    whenNotPaused
+    payable
+    returns (uint256)
+  {
     return depositEthFor(msg.sender);
   }
 
-  function depositERC20(address _token, uint256 _amount) external whenNotPaused returns (uint256) {
+  function depositERC20(address _token, uint256 _amount)
+    external
+    whenNotPaused
+    returns (uint256)
+  {
     return depositERC20For(msg.sender, _token, _amount);
   }
 
-  function depositERC721(address _token, uint256 _tokenId) external whenNotPaused returns (uint256) {
+  function depositERC721(address _token, uint256 _tokenId)
+    external
+    whenNotPaused
+    returns (uint256)
+  {
     return depositERC721For(msg.sender, _token, _tokenId);
   }
 
-  function depositEthFor(address _owner) public whenNotPaused payable returns (uint256) {
+  function depositEthFor(address _owner)
+    public
+    whenNotPaused
+    payable
+    returns (uint256)
+  {
     address _weth = registry.getContract(registry.WETH_TOKEN());
     WETH(_weth).deposit.value(msg.value)();
     return _createDepositEntry(_owner, _weth, 20, msg.value);
   }
 
-  function depositERC20For(address _user, address _token, uint256 _amount) public whenNotPaused returns (uint256) {
-    require(IERC20(_token).transferFrom(msg.sender, address(this), _amount), "ERC-20 token transfer failed");
+  function depositERC20For(address _user, address _token, uint256 _amount)
+    public
+    whenNotPaused
+    returns (uint256)
+  {
+    require(
+      IERC20(_token).transferFrom(msg.sender, address(this), _amount),
+      "MainchainGatewayManager: ERC-20 token transfer failed"
+    );
     return _createDepositEntry(_user, _token, 20, _amount);
   }
 
-  function depositERC721For(address _user, address _token, uint256 _tokenId) public whenNotPaused returns (uint256) {
+  function depositERC721For(address _user, address _token, uint256 _tokenId)
+    public
+    whenNotPaused
+    returns (uint256)
+  {
     IERC721(_token).transferFrom(msg.sender, address(this), _tokenId);
     return _createDepositEntry(_user, _token, 721, _tokenId);
   }
 
-  function depositBulkFor(address _user, address[] memory _tokens, uint256[] memory _tokenNumbers) public whenNotPaused {
+  function depositBulkFor(
+    address _user,
+    address[] memory _tokens,
+    uint256[] memory _tokenNumbers
+  )
+    public
+    whenNotPaused
+  {
     require(_tokens.length == _tokenNumbers.length);
 
     for (uint256 _i = 0; _i < _tokens.length; _i++) {
@@ -85,7 +127,9 @@ contract MainchainGatewayManager is MainchainGatewayStorage {
     address _token,
     uint256 _amount,
     bytes memory _signatures
-  ) public whenNotPaused
+  )
+    public
+    whenNotPaused
   {
     withdrawTokenFor(
       _withdrawalId,
@@ -102,7 +146,9 @@ contract MainchainGatewayManager is MainchainGatewayStorage {
     address _token,
     uint256 _amount,
     bytes memory _signatures
-  ) public whenNotPaused
+  )
+    public
+    whenNotPaused
   {
     (,, uint32 _tokenType) = registry.getMappedToken(_token, true);
 
@@ -130,7 +176,9 @@ contract MainchainGatewayManager is MainchainGatewayStorage {
     address _token,
     uint256 _amount,
     bytes memory _signatures
-  ) public whenNotPaused
+  )
+    public
+    whenNotPaused
   {
     withdrawERC20For(
       _withdrawalId,
@@ -147,7 +195,10 @@ contract MainchainGatewayManager is MainchainGatewayStorage {
     address _token,
     uint256 _amount,
     bytes memory _signatures
-  ) public whenNotPaused onlyMappedToken(_token, 20)
+  )
+    public
+    whenNotPaused
+    onlyMappedToken(_token, 20)
   {
     bytes32 _hash = keccak256(
       abi.encodePacked(
@@ -167,7 +218,10 @@ contract MainchainGatewayManager is MainchainGatewayStorage {
       uint256 _gatewayBalance = IERC20(_token).balanceOf(address(this));
 
       if (_gatewayBalance < _amount) {
-        require(IERC20Mintable(_token).mint(address(this), _amount.sub(_gatewayBalance)), "Minting ERC20 token to gateway failed");
+        require(
+          IERC20Mintable(_token).mint(address(this), _amount.sub(_gatewayBalance)),
+          "MainchainGatewayManager: Minting ERC20 token to gateway failed"
+        );
       }
 
       require(IERC20(_token).transfer(_user, _amount), "Transfer failed");
@@ -186,7 +240,9 @@ contract MainchainGatewayManager is MainchainGatewayStorage {
     address _token,
     uint256 _tokenId,
     bytes memory _signatures
-  ) public whenNotPaused
+  )
+    public
+    whenNotPaused
   {
     withdrawERC721For(
       _withdrawalId,
@@ -204,9 +260,9 @@ contract MainchainGatewayManager is MainchainGatewayStorage {
     uint256 _tokenId,
     bytes memory _signatures
   )
-  public
-  whenNotPaused
-  onlyMappedToken(_token, 721)
+    public
+    whenNotPaused
+    onlyMappedToken(_token, 721)
   {
     bytes32 _hash = keccak256(
       abi.encodePacked(
@@ -221,7 +277,10 @@ contract MainchainGatewayManager is MainchainGatewayStorage {
     require(verifySignatures(_hash, _signatures));
 
     if (!_tryERC721TransferFrom(_token, address(this), _user, _tokenId)) {
-      require(IERC721Mintable(_token).mint(_user, _tokenId), "Minting ERC721 token to gateway failed");
+      require(
+        IERC721Mintable(_token).mint(_user, _tokenId),
+        "MainchainGatewayManager: Minting ERC721 token to gateway failed"
+      );
     }
 
     _insertWithdrawalEntry(_withdrawalId, _user, _token, _tokenId);
@@ -233,7 +292,10 @@ contract MainchainGatewayManager is MainchainGatewayStorage {
   function verifySignatures(
     bytes32 _hash,
     bytes memory _signatures
-  ) public view returns (bool)
+  )
+    public
+    view
+    returns (bool)
   {
     uint256 _signatureCount = _signatures.length.div(66);
 
@@ -259,8 +321,10 @@ contract MainchainGatewayManager is MainchainGatewayStorage {
     address _token,
     uint32 _standard,
     uint256 _number
-  ) internal onlyMappedToken(_token, _standard)
-  returns (uint256 _depositId)
+  )
+    internal
+    onlyMappedToken(_token, _standard)
+    returns (uint256 _depositId)
   {
     (,address _sidechainToken, uint32 _tokenStandard) = registry.getMappedToken(_token, true);
     require(_standard == _tokenStandard);
@@ -273,9 +337,8 @@ contract MainchainGatewayManager is MainchainGatewayStorage {
       _number
     );
 
-    _depositId = depositCount;
     deposits.push(_entry);
-    depositCount++;
+    _depositId = depositCount++;
 
     emit TokenDeposited(
       _depositId,
@@ -293,8 +356,8 @@ contract MainchainGatewayManager is MainchainGatewayStorage {
     address _token,
     uint256 _number
   )
-  internal
-  onlyNewWithdrawal(_withdrawalId)
+    internal
+    onlyNewWithdrawal(_withdrawalId)
   {
     WithdrawalEntry memory _entry = WithdrawalEntry(
       _owner,
@@ -310,7 +373,8 @@ contract MainchainGatewayManager is MainchainGatewayStorage {
   function _withdrawETHFor(
     address _user,
     uint256 _amount
-  ) internal
+  )
+    internal
   {
     address _weth = registry.getContract(registry.WETH_TOKEN());
     WETH(_weth).withdraw(_amount);
@@ -318,9 +382,19 @@ contract MainchainGatewayManager is MainchainGatewayStorage {
   }
 
   // See more here https://blog.polymath.network/try-catch-in-solidity-handling-the-revert-exception-f53718f76047
-  function _tryERC721TransferFrom(address _token, address _from, address _to, uint256 _tokenId) internal returns (bool) {
+  function _tryERC721TransferFrom(
+    address _token,
+    address _from,
+    address _to,
+    uint256 _tokenId
+  )
+    internal
+    returns (bool)
+  {
     (bool success,) = _token.call(
-      abi.encodeWithSelector(IERC721(_token).transferFrom.selector, _from, _to, _tokenId)
+      abi.encodeWithSelector(
+        IERC721(_token).transferFrom.selector, _from, _to, _tokenId
+      )
     );
     return success;
   }
