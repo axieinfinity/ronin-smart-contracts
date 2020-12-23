@@ -1,65 +1,29 @@
-Today we are announcing the launch of a public Testnet for Ronin as well as our inaugural bug bounty program! If you have questions please join the [Axie Discord](https://discord.com/invite/axie) and post in the #Ronin channel.
+##**Ronin-Smart-Contracts**
 
-**Ronin Key Facts**
+The smart contracts that power Ronin.
 
-- Ronin is an Ethereum sidechain built specifically for Axie Infinity. Each Axie is an ERC721 token represented as a unique digital creature that can be used in a variety of separate games. So far, there are Axie battles and a kingdom-building game centered around ownership of land plots. Land and items (artifacts) are also ERC 721 tokens. Small Love Potions (SLP) and Axie Infinity Shards (AXS) are ERC 20 tokens native to the Axie ecosystem.
-- Ronin is currently a Byzantine Fault Tolerant proof of authority(POA) network operated by validators. Validators are appointed by Sky Mavis, the core developers of Axie Infinity.
-- Blocks require approval from 2/3 of Validators in order to be approved Over time, Ronin will be upgraded to incorporate proof of stake elements as well as new layer 2 solutions such as Zk sync and Optimistic rollups.
-- Validators are responsible for authoring and validating blocks, updating price oracles, and approving deposits and transfers of assets (ETH, ERC20, and ERC721) to and from Ronin. Validators also control the addition and removal of other validators.
+## **Validators**
 
-**Bug Bounty Program**
+Only validators can produce blocks on Ronin. The validators also acknowledge deposit and withdrawal events to facilitate asset transfers.
 
-The bug bounty program will commence at 9:00 AM EST on December 23rd, 2020, and run until Mainnet launch. The scope of this program is to double-check functionality related to deposits, withdrawals, and validator addition/removal. All code related to this bounty program is publicly available within this repo. We are specifically looking for issues related to:
+The validator contract has a minimum threshold that must be reached for state changes such as transfer of assets and addition/removal of validators. There is 1 validator contract on Ethereum and a corresponding validator contract on Ronin. An admin (in the future this will be upgraded to a multi-sig walllet) has the right to manage validators on Ethereum. These changes are relayed to Ronin through the Bridge component.
 
-- Theft of user assets
-- Block validation
-- Issues around validating deposits and withdrawals
-- Issues around deployment
-- Loss of private keys
-- Admin control issues
-- Other process breakdowns
+## Ethereum Bridge
 
-**Rules**
+When an event happens on Ethereum, the Bridge component in each validator node will pick it up and relay it to Ronin by sending a transaction.
 
-- Rewards for bugs are issued first come first serve. Issues that have already been flagged are not eligible for rewards.
-- This program only covers code from this Github repo.
-- Description of vulnerabilities must be submitted as issues to this repo.
-- Rewards will be distributed at the end of the bug bounty program.
-- We will keep you updated on the status of your submitted issue.
+Depending on the action, these transactions will be relayed to *SideChainValidator* (changes in the validator list/updates to the consensus threshold) or *SidechainGatewayManager* (deposits, withdrawals).
 
-**Submission Guidelines**
+If there are enough acknowledgements (# of acknowledgement/# of validator >= ratio), the event will confirm on Ronin.
 
-Use this template when submitting issues:
+### **Adding Validators**
 
-**Description:** Use clear, concise phrases when describing the issue and it's potential impact
+An admin account will need to send a transaction to add the new validator to *MainchainValidator*. Next, the Bridge in each validator node will acknowledge and approve the new validator. After enough acknowledgements, the new validator can start proposing blocks.
 
-**Impact:** What will happen if the issue is left unaddressed?
+### **Deposits**
 
-**Reproduction:** How can we reproduce the vulnerability?
+Users can deposit ETH, ERC20, and ERC721 (NFTs) by sending transactions to *MainchainGatewayManager*, and waiting for the deposit to be verified on Ronin. The gateway should have a mapping between token contracts on Ethereum and on Ronin before the deposit can take place.
 
-**Fix:** How can the issue be fixed?
+### **Withdrawals**
 
-**Additional Comments:** Use this space for additional information.
-
-**ETH Address:** Needed for reward distribution.
-
-Please make sure to include relevant screenshots and code snippets.
-
-**Rewards**
-
-Rewards will be based on severity which is derived from impact and likelihood.
-
-- **Critical bugs: I**ssues that can result in a hack, theft of user funds, and chain collapse.  3000 AXS
-- **Major bugs:** Can cause significant problems when using the chain such as issues with validating user deposits and withdrawals or loss of private keys. 1500 AXS
-- **Minor bugs:** A small issue, perhaps with wallets, accounts, or deployment. Not chain breaking but still great to resolve early.  AXS 300 AXS
-- **Useful feedback:** Comments that while not specifying a bug, can help improve confidence and integrity of the system. 75 AXS
-
-We have capped the amount of AXS reserved for this program at 15,000 AXS.
-
- _Please note that AXS is not the native token for Ronin. All AXS will be taken from Sky Mavis owned AXS reserves._
-
-I**mportant Legal Information:**
-
-The bug bounty program is an experimental rewards program for our community developers to help us improve Ronin. Rewards are at the sole discretion of the Sky Mavis team. All rewards are subject to applicable law and thus applicable taxes. Don't target our physical security measures, or attempt to Sybil attack or (DDOS) attack the program. Your testing must not violate any law or compromise any data that is not yours.
-
-Copyright (c) 2020 Sky Mavis PTE. LTD
+Similar to deposits, there should be token mapping between Ronin and Ethereum before users can withdraw. However instead of sending a relay transaction on Ethereum, the validators simply provide a signature that the withdrawal event has taken place. The withdrawal then needs to collect enough signatures before it can be claimed by the user on Ethereum.
