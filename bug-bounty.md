@@ -1,5 +1,6 @@
 If you have questions please join the [Axie Discord](https://discord.com/invite/axie) and post in the #Ronin channel.
-Ronin testnet endpoints: https://ronin-testnet.skymavis.com/rpc and wss://ronin-testnet.skymavis.com/ws
+
+Ronin testnet endpoints: https://ronin-testnet.skymavis.com/rpc or via websocket at: wss://ronin-testnet.skymavis.com/ws
 
 **Ronin Key Facts**
 
