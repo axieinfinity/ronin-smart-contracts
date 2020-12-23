@@ -8,6 +8,7 @@ Ronin testnet endpoints: https://ronin-testnet.skymavis.com/rpc or via websocket
 - Ronin is currently a Byzantine Fault Tolerant proof of authority(POA) network operated by validators. Validators are appointed by Sky Mavis, the core developers of Axie Infinity.
 - Blocks require approval from 2/3 of Validators in order to be approved. Over time, Ronin will be upgraded to incorporate proof of stake elements as well as new layer 2 solutions such as Zk sync and Optimistic rollups.
 - Validators are responsible for authoring and validating blocks, updating price oracles, and approving deposits and transfers of assets (ETH, ERC20, and ERC721) to and from Ronin. Validators also control the addition and removal of other validators.
+- Ronin is developed based on Ethereum codebase so you can use web3 client to connect to Ronin. At the moment all transactions on Ronin is free of charge. (You can set the gas price in the transaction to be 0).
 
 **Bug Bounty Program**
 
