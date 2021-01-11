@@ -195,10 +195,10 @@
     web3-eth-abi "1.0.0-beta.55"
     web3-utils "1.0.0-beta.55"
 
-"@axie/contract-library@^1.1.1":
-  version "1.1.1"
-  resolved "http://npm.axieinfinity.co/@axie%2fcontract-library/-/contract-library-1.1.1.tgz#ba49f3160777800d4c83ae0415fdcb16fe4b3875"
-  integrity sha512-fnltaJzqQs9RDMhI2OSu5HMbUwJrB4k/CEjWzYtGDRPiyO21AboufC0QK7DZ3k3LHZlwwXlHaUt69VsEuafOmg==
+"@axie/contract-library@1.1.2":
+  version "1.1.2"
+  resolved "http://npm.axieinfinity.co/@axie%2fcontract-library/-/contract-library-1.1.2.tgz#d4f27fb82b8e3f4a8c54e258ad2b4ce9288f33ae"
+  integrity sha512-iAZqnOSTjimRq6thgBqL7HmHcNy6t8moL3wmV9fi+31c1E1wKR7URrKsFlCLzaajhCnpjzp6QAYixV5pfM//rw==
   dependencies:
     "@axie/base-contract" "^1.1.1"
     "@axie/web3-pool" "^1.0.0"
