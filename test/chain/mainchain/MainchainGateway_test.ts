@@ -13,6 +13,7 @@ import web3Utils = require('web3-utils');
 import { MainchainGatewayManagerContract } from '../../../src/contract/mainchain_gateway_manager';
 import { MainchainGatewayProxyContract } from '../../../src/contract/mainchain_gateway_proxy';
 import { MainchainValidatorContract } from '../../../src/contract/mainchain_validator';
+import { PausableAdminContract } from '../../../src/contract/pausable_admin';
 import { RegistryContract } from '../../../src/contract/registry';
 import { WETHContract } from '../../../src/contract/weth';
 
@@ -338,6 +339,15 @@ describe('Mainchain gateway', () => {
       await mainchainGateway.withdrawERC721For(new BN(6), bob, erc721.address, new BN(1000), signatures).send();
       const owner = await erc721.ownerOf(new BN(1000)).call();
       expect(owner.toLowerCase()).eq(bob.toLowerCase());
+    });
+
+    it('should be able to set pausable admin contract', async () => {
+      const pausableAdmin = await PausableAdminContract.deploy(mainchainGateway.address).send(web3Pool);
+      await mainchainGateway.changeAdmin(pausableAdmin.address).send();
+
+      await pausableAdmin.pauseGateway().send();
+      const paused = await mainchainGateway.paused().call();
+      expect(paused).eq(true);
     });
   });
 });
