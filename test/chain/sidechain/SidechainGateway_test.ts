@@ -138,12 +138,12 @@ describe('Sidechain gateway', () => {
 
     it('should be able to call deposit and release token', async () => {
       const amount = ethToWei(1);
-      await sidechainGateway.depositERCTokenFor(
-        new BN(0),
-        alice,
-        weth.address,
-        20,
-        amount,
+      await sidechainGateway.batchDepositERCTokenFor(
+        [new BN(0)],
+        [alice],
+        [weth.address],
+        [20],
+        [amount],
       ).send({
         from: bob,
       });
@@ -313,7 +313,7 @@ describe('Sidechain gateway', () => {
       await sidechainGateway.acknowledWithdrawalOnMainchain(new BN(3)).send();
       const [withdrawalIds] = await sidechainGateway.getPendingWithdrawals(alice).call();
       expect(withdrawalIds.length).eq(10);
-      await sidechainGateway.acknowledWithdrawalOnMainchain(new BN(3)).send({ from: bob });
+      await sidechainGateway.batchAcknowledWithdrawalOnMainchain([new BN(3)]).send({ from: bob });
       const [ids, entries] = await sidechainGateway.getPendingWithdrawals(alice).call();
       expect(ids.length).eq(9);
       expect(entries[1].tokenNumber.toString()).eq(ethToWei(1).muln(9).toString());
@@ -325,7 +325,7 @@ describe('Sidechain gateway', () => {
 
       await sidechainGateway.submitWithdrawalSignatures(id, false, sig1).send();
       const { signatures: sig2 } = await getCombinedSignatures(false, [bob], 'withdrawETH', 1, 2, 3);
-      await sidechainGateway.submitWithdrawalSignatures(id, false, sig2).send({ from: bob });
+      await sidechainGateway.batchSubmitWithdrawalSignatures([id], [false], [sig2]).send({ from: bob });
       const firstSigner = await sidechainGateway.withdrawalSigners(id, new BN(0)).call();
       expect(firstSigner.toLowerCase()).eq(alice.toLowerCase());
 
