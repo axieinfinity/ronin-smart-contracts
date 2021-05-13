@@ -13,23 +13,29 @@ import "./SidechainGatewayStorage.sol";
 
 /**
  * @title SidechainGatewayManager
- * @dev Logic to handle deposits and withdrawl on Sidechain.
+ * @dev Logic to handle deposits and withdrawals on Sidechain.
  */
 contract SidechainGatewayManager is SidechainGatewayStorage {
   using AddressUtils for address;
   using SafeMath for uint256;
   using ECVerify for bytes32;
 
-  modifier onlyMappedToken(address _token, uint32 _standard) {
+  modifier onlyMappedToken(
+    address _token,
+    uint32 _standard
+  ) {
     require(
       registry.isTokenMapped(_token, _standard, false),
-      "SidechainGatewayManager: Token is not mapped"
+      "SidechainGatewayManager: token is not mapped"
     );
     _;
   }
 
   modifier onlyValidator() {
-    require(_getValidator().isValidator(msg.sender));
+    require(
+      _getValidator().isValidator(msg.sender),
+      "SidechainGatewayManager: sender is not validator"
+    );
     _;
   }
 
@@ -38,6 +44,92 @@ contract SidechainGatewayManager is SidechainGatewayStorage {
     payable
   {}
 
+  function batchDepositERCTokenFor(
+    uint256[] calldata _depositIds,
+    address[] calldata _owners,
+    address[] calldata _tokens,
+    uint32[] calldata _standards,
+    uint256[] calldata _tokenNumbers
+  )
+    external
+    whenNotPaused
+    onlyValidator
+  {
+    require(
+      _depositIds.length == _owners.length &&
+        _depositIds.length == _tokens.length &&
+        _depositIds.length == _standards.length &&
+        _depositIds.length == _tokenNumbers.length,
+      "SidechainGatewayManager: invalid input array length"
+    );
+
+    for (uint256 _i; _i < _depositIds.length; _i++) {
+      depositERCTokenFor(
+        _depositIds[_i],
+        _owners[_i],
+        _tokens[_i],
+        _standards[_i],
+        _tokenNumbers[_i]
+      );
+    }
+  }
+
+  function batchAcknowledWithdrawalOnMainchain(
+    uint256[] calldata _withdrawalIds
+  )
+    external
+    whenNotPaused
+    onlyValidator
+  {
+    for (uint256 _i; _i < _withdrawalIds.length; _i++) {
+      acknowledWithdrawalOnMainchain(_withdrawalIds[_i]);
+    }
+  }
+
+  function batchSubmitWithdrawalSignatures(
+    uint256[] calldata _withdrawalIds,
+    bool[] calldata _shouldReplaces,
+    bytes[] calldata _sigs
+  )
+    external
+    whenNotPaused
+    onlyValidator
+  {
+    require(
+      _withdrawalIds.length == _shouldReplaces.length &&
+        _withdrawalIds.length == _sigs.length,
+      "SidechainGatewayManager: invalid input array length"
+    );
+
+    for (uint256 _i; _i < _withdrawalIds.length; _i++) {
+      submitWithdrawalSignatures(
+        _withdrawalIds[_i],
+        _shouldReplaces[_i],
+        _sigs[_i]
+      );
+    }
+  }
+
+  function withdrawETH(uint256 _amount)
+    external
+    whenNotPaused
+    returns (uint256)
+  {
+    address _weth = registry.getContract(registry.WETH_TOKEN());
+    return withdrawERC20For(msg.sender, _weth, _amount);
+  }
+
+  function withdrawERC20(
+    address _token,
+    uint256 _amount
+  )
+    external
+    whenNotPaused
+    returns (uint256)
+  {
+    return withdrawERC20For(msg.sender, _token, _amount);
+  }
+
   function depositERCTokenFor(
     uint256 _depositId,
     address _owner,
@@ -45,12 +137,16 @@ contract SidechainGatewayManager is SidechainGatewayStorage {
     uint32 _standard,
     uint256 _tokenNumber
   )
-    external
+    public
     whenNotPaused
     onlyValidator
   {
     (,, uint32 _tokenStandard) = registry.getMappedToken(_token, false);
-    require(_tokenStandard == _standard);
+
+    require(
+      _tokenStandard == _standard,
+      "SidechainGatewayManager: token standard is not matched"
+    );
 
     bytes32 _hash = keccak256(abi.encode(_owner, _token, _standard, _tokenNumber));
 
@@ -78,24 +174,11 @@ contract SidechainGatewayManager is SidechainGatewayStorage {
     }
   }
 
-  function withdrawETH(uint256 _amount)
-    external
-    whenNotPaused
-    returns (uint256)
-  {
-    address _weth = registry.getContract(registry.WETH_TOKEN());
-    return withdrawERC20For(msg.sender, _weth, _amount);
-  }
-
-  function withdrawERC20(address _token, uint256 _amount)
-    external
-    whenNotPaused
-    returns (uint256)
-  {
-    return withdrawERC20For(msg.sender, _token, _amount);
-  }
-
-  function withdrawERC20For(address _owner, address _token, uint256 _amount)
+  function withdrawERC20For(
+    address _owner,
+    address _token,
+    uint256 _amount
+  )
     public
     whenNotPaused
     returns (uint256)
@@ -107,7 +190,10 @@ contract SidechainGatewayManager is SidechainGatewayStorage {
     return _createWithdrawalEntry(_owner, _token, 20, _amount);
   }
 
-  function withdrawERC721(address _token, uint256 _tokenId)
+  function withdrawERC721(
+    address _token,
+    uint256 _tokenId
+  )
     public
     whenNotPaused
     returns (uint256)
@@ -115,7 +201,11 @@ contract SidechainGatewayManager is SidechainGatewayStorage {
     return withdrawalERC721For(msg.sender, _token, _tokenId);
   }
 
-  function withdrawalERC721For(address _owner, address _token, uint256 _tokenId)
+  function withdrawalERC721For(
+    address _owner,
+    address _token,
+    uint256 _tokenId
+  )
     public
     whenNotPaused
     returns (uint256)
@@ -157,7 +247,10 @@ contract SidechainGatewayManager is SidechainGatewayStorage {
   {
     WithdrawalEntry memory _entry = withdrawals[_withdrawalId];
 
-    require(_entry.owner == msg.sender);
+    require(
+      _entry.owner == msg.sender,
+      "SidechainGatewayManager: sender is not entry owner"
+    );
 
     emit RequestTokenWithdrawalSigAgain(
       _withdrawalId,
@@ -174,7 +267,10 @@ contract SidechainGatewayManager is SidechainGatewayStorage {
   )
     public
     view
-    returns (uint256[] memory ids, WithdrawalEntry[] memory entries)
+    returns (
+      uint256[] memory ids,
+      WithdrawalEntry[] memory entries
+    )
   {
     ids = pendingWithdrawals[_owner];
     entries = new WithdrawalEntry[](ids.length);
@@ -224,7 +320,10 @@ contract SidechainGatewayManager is SidechainGatewayStorage {
   function getWithdrawalSignatures(uint256 _withdrawalId)
     public
     view
-    returns (address[] memory _signers, bytes[] memory _sigs)
+    returns (
+      address[] memory _signers,
+      bytes[] memory _sigs
+    )
   {
     _signers = getWithdrawalSigners(_withdrawalId);
     _sigs = new bytes[](_signers.length);
@@ -233,7 +332,11 @@ contract SidechainGatewayManager is SidechainGatewayStorage {
     }
   }
 
-  function _depositERC20For(address _owner, address _token, uint256 _amount)
+  function _depositERC20For(
+    address _owner,
+    address _token,
+    uint256 _amount
+  )
     internal
   {
     uint256 _gatewayBalance = IERC20(_token).balanceOf(address(this));
@@ -250,7 +353,11 @@ contract SidechainGatewayManager is SidechainGatewayStorage {
     );
   }
 
-  function _depositERC721For(address _owner, address _token, uint256 _tokenId)
+  function _depositERC721For(
+    address _owner,
+    address _token,
+    uint256 _tokenId
+  )
     internal
   {
     if (!_tryERC721TransferFrom(_token, address(this), _owner, _tokenId)) {
@@ -295,7 +402,12 @@ contract SidechainGatewayManager is SidechainGatewayStorage {
     withdrawalCount++;
 
     pendingWithdrawals[_owner].push(_withdrawalId);
-    require(pendingWithdrawals[_owner].length <= maxPendingWithdrawal);
+
+    require(
+      pendingWithdrawals[_owner].length <= maxPendingWithdrawal,
+      "SidechainGatewayManager: pending withdrawal quantity reached the limit"
+    );
+
     emit TokenWithdrew(
       _withdrawalId,
       _owner,
