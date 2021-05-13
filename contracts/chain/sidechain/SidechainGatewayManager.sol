@@ -429,7 +429,7 @@ contract SidechainGatewayManager is SidechainGatewayStorage {
     returns (bool)
   {
     (bool success,) = _token.call(
-          abi.encodeWithSelector(
+      abi.encodeWithSelector(
         IERC721(_token).transferFrom.selector, _from, _to, _tokenId
       )
     );
