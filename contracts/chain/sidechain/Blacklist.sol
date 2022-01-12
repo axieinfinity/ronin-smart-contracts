@@ -4,31 +4,38 @@ import "@axie/contract-library/contracts/access/HasAdmin.sol";
 
 
 contract Blacklist is HasAdmin {
-  event AddressBlacklisted(address indexed _address, bool indexed _status);
-  event BlacklistAllChange(bool indexed _status);
+  event ContractDisabled(bool indexed _status);
+
+  event AddressesBlacklisted(
+    address[] _addresses,
+    bool indexed _status
+  );
 
   mapping (address => bool) internal _blacklisted;
 
-  bool public blacklistAll;
+  // Returns whether the contract is still valid or not
+  bool public disabled;
 
   constructor()
     public
   {}
 
-  function blacklist(address _address, bool _status)
+  function blacklists(address[] calldata  _addresses, bool _status)
     external
     onlyAdmin
   {
-    _blacklisted[_address] = _status;
-    emit AddressBlacklisted(_address, _status);
+    for (uint256 _i; _i < _addresses.length; _i++) {
+      _blacklisted[_addresses[_i]] = _status;
+    }
+    emit AddressesBlacklisted(_addresses, _status);
   }
 
-  function blacklistAllAddresses(bool _status)
+  function setDisabled(bool _status)
     external
     onlyAdmin
   {
-    blacklistAll = _status;
-    emit BlacklistAllChange(_status);
+    disabled = _status;
+    emit ContractDisabled(_status);
   }
 
   function blacklisted(address _address)
@@ -36,6 +43,6 @@ contract Blacklist is HasAdmin {
     view
     returns (bool)
   {
-    return blacklistAll || _blacklisted[_address];
+    return !disabled && _blacklisted[_address];
   }
 }
