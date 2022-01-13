@@ -1,4 +1,4 @@
-##**Ronin-Smart-Contracts**
+## **Ronin-Smart-Contracts**
 
 The smart contracts that power Ronin.
 
@@ -6,7 +6,7 @@ The smart contracts that power Ronin.
 
 Only validators can produce blocks on Ronin. The validators also acknowledge deposit and withdrawal events to facilitate asset transfers.
 
-The validator contract has a minimum threshold that must be reached for state changes such as transfer of assets and addition/removal of validators. There is 1 validator contract on Ethereum and a corresponding validator contract on Ronin. An admin (in the future this will be upgraded to a multi-sig walllet) has the right to manage validators on Ethereum. These changes are relayed to Ronin through the Bridge component.
+The validator contract has a minimum threshold that must be reached for state changes such as transfer of assets and addition/removal of validators. There is 1 validator contract on Ethereum and a corresponding validator contract on Ronin. An admin (in the future this will be upgraded to a multi-sig wallet) has the right to manage validators on Ethereum. These changes are relayed to Ronin through the Bridge component.
 
 ## Ethereum Bridge
 
