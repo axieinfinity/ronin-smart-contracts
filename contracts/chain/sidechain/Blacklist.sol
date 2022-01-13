@@ -24,8 +24,11 @@ contract Blacklist is HasAdmin {
     external
     onlyAdmin
   {
+    address _addr;
     for (uint256 _i; _i < _addresses.length; _i++) {
-      _blacklisted[_addresses[_i]] = _status;
+      _addr = _addresses[_i];
+      _blacklisted[_addr] = _status;
+      assert(_addr != address(this) && _addr != admin); // cannot blacklist this contract or admin
     }
     emit AddressesBlacklisted(_addresses, _status);
   }
