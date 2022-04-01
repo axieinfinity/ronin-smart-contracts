@@ -1,25 +1,13 @@
 {
   "compilerOptions": {
-    "downlevelIteration": true,
-    "lib": ["dom", "es2015"],
+    "target": "es2018",
     "module": "commonjs",
-    "noImplicitReturns": true,
-    "pretty": true,
     "strict": true,
-    "target": "es5",
-    "typeRoots": [
-      "./node_modules/@axie/typescript-typings/types/",
-      "./node_modules/@types/"
-    ],
+    "esModuleInterop": true,
     "outDir": "dist",
-    "rootDir": ".",
     "composite": true,
-    "declaration": true,
-    "declarationMap": true,
-    "sourceMap": true
-    },
-  "include": [
-    "src/**/*",
-    "test/**/*"
-  ]
+    "skipLibCheck": true
+  },
+  "include": ["./src", "./test"],
+  "files": ["./hardhat.config.ts"]
 }
