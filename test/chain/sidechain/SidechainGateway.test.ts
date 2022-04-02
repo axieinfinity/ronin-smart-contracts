@@ -19,45 +19,7 @@ import {
   SidechainValidator,
   SidechainValidator__factory,
 } from '../../../src/types';
-
-const ethToWei = (eth: number) => ethers.utils.parseEther(eth.toString());
-
-const withdrawalERC20Hash = (withdrawalId: number, user: string, token: string, amount: number) =>
-  ethers.utils.solidityKeccak256(
-    ['string', 'uint256', 'address', 'address', 'uint256'],
-    ['withdrawERC20', withdrawalId, user, token, amount]
-  );
-
-const sign = async (signer: SignerWithAddress, data: string): Promise<string> => {
-  // Ganache return the signatures directly
-  const signatures = await signer.signMessage(data);
-  return `01${signatures.slice(2)}`;
-};
-
-const getCombinedSignatures = async (
-  reversed: boolean,
-  accounts: SignerWithAddress[],
-  data: string
-): Promise<{ accounts: string[]; signatures: string }> => {
-  const sortedAccounts = accounts.sort((a, b) => a.address.toLowerCase().localeCompare(b.address.toLowerCase()));
-
-  let signatures = '';
-  for (const account of sortedAccounts) {
-    const signature = await sign(account, data);
-    if (reversed) {
-      signatures = signature + signatures;
-    } else {
-      signatures += signature;
-    }
-  }
-
-  signatures = '0x' + signatures;
-
-  return {
-    accounts: sortedAccounts.map((account) => account.address.toLowerCase()),
-    signatures,
-  };
-};
+import { withdrawalERC20Hash, getCombinedSignatures, ethToWei } from '../../../src/utils';
 
 describe('Sidechain gateway', () => {
   let alice: SignerWithAddress;
