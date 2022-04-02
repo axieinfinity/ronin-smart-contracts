@@ -1,0 +1,7 @@
+#!/bin/sh
+. "$(dirname "$0")/_/husky.sh"
+
+set -ex
+
+yarn lint-staged
+yarn compile

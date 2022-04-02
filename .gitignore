@@ -18,9 +18,10 @@ packages/document-parser/credentials/access_token.json
 # Error files
 yarn-error.log
 
-/artifacts/
-/src/abi/
-/src/bytecode/
-/src/contract/
+artifacts/
 .npmrc
-/.idea
+.idea
+cache/
+src/types/
+yarn-error.log
+.env
